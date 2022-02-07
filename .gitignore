@@ -4,3 +4,5 @@
 *.swp
 tags
 itst/docs/current
+__pycache__
+itst/www
