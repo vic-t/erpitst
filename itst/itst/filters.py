@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import frappe
 
 # searches for activity item (category)
-def supplier_by_capability(doctype, txt, searchfield, start, page_len, filters):
+def activity_item(doctype, txt, searchfield, start, page_len, filters):
     return frappe.db.sql(
         """SELECT `tabItem`.`name`, `tabItem`.`item_group`
            FROM `tabItem`
