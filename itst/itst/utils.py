@@ -13,7 +13,8 @@ def get_invoiceable_timesheets(from_date, to_date, project):
             `tabTimesheet Detail`.`billing_hours` AS `billing_hours`, 
             `tabTimesheet Detail`.`remarks` AS `remarks`, 
             `tabTimesheet Detail`.`billing_rate` AS `billing_rate`,
-            `tabTimesheet Detail`.`category` AS `category`
+            `tabTimesheet Detail`.`category` AS `category`,
+            `tabTimesheet Detail`.`from_time` AS `from_time`
         FROM `tabTimesheet Detail`
         LEFT JOIN `tabTimesheet` ON `tabTimesheet`.`name` = `tabTimesheet Detail`.`parent`
         LEFT JOIN `tabSales Invoice Item` ON (
