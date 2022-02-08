@@ -22,7 +22,7 @@ def get_invoiceable_timesheets(from_date, to_date, project):
         )
         WHERE 
             `tabTimesheet Detail`.`from_time` >= "{from_date}"
-            AND `tabTimesheet Detail`.`from_time` >= "{to_date}"
+            AND `tabTimesheet Detail`.`from_time` <= "{to_date}"
             AND `tabTimesheet Detail`.`project` = "{project}"
             AND `tabTimesheet`.`docstatus` = 1;
     """.format(from_date=from_date, to_date=to_date, project=project)
