@@ -9,6 +9,6 @@ def activity_item(doctype, txt, searchfield, start, page_len, filters):
     return frappe.db.sql(
         """SELECT `tabItem`.`name`, `tabItem`.`item_group`
            FROM `tabItem`
-           WHERE `tabItem`.`item_group` LIKE "%{c}%" AND `tabItem`.`name` LIKE "%{s}%";
-        """.format(c=filters['keyword'], s=txt))
+           WHERE `tabItem`.`item_group` LIKE "%{c}%" AND `tabItem`.`name` LIKE "%{s}%" AND `tabItem`.`activity_type` = "{a}";
+        """.format(c=filters['keyword'], s=txt, a=filters['activity_type']))
   
