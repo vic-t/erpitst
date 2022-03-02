@@ -1,0 +1,54 @@
+{
+ "creation": "2022-03-02 17:07:25.167549",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_group",
+  "from_amount",
+  "to_amount",
+  "provision"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Group",
+   "options": "Item Group",
+   "reqd": 1
+  },
+  {
+   "fieldname": "from_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "From Amount",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "To Amount",
+   "reqd": 1
+  },
+  {
+   "fieldname": "provision",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Provision",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2022-03-02 17:07:25.167549",
+ "modified_by": "Administrator",
+ "module": "ITST",
+ "name": "Sales Partner Commission",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

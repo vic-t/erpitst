@@ -1,0 +1,55 @@
+{
+ "creation": "2022-03-02 17:11:55.993542",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_group",
+  "target",
+  "achievement",
+  "bonus_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Group",
+   "options": "Item Group",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Target",
+   "reqd": 1
+  },
+  {
+   "default": "70",
+   "fieldname": "achievement",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Achievement",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bonus_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Bonus Amount",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2022-03-02 17:11:55.993542",
+ "modified_by": "Administrator",
+ "module": "ITST",
+ "name": "Sales Partner Bonus",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
