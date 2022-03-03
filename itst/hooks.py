@@ -26,7 +26,9 @@ app_license = "GPL"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    "Customer" : "public/js/customer.js"
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -90,13 +92,13 @@ app_license = "GPL"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"itst.tasks.all"
 # 	],
-# 	"daily": [
-# 		"itst.tasks.daily"
-# 	],
+    "daily": [
+        "itst.itst.doctype.abo.abo.create_todays_invoices"
+    ]
 # 	"hourly": [
 # 		"itst.tasks.hourly"
 # 	],
@@ -106,7 +108,7 @@ app_license = "GPL"
 # 	"monthly": [
 # 		"itst.tasks.monthly"
 # 	]
-# }
+}
 
 # Testing
 # -------

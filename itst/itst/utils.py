@@ -38,3 +38,23 @@ def get_invoiceable_timesheets(from_date, to_date, project):
 @frappe.whitelist()
 def test():
     return "all good"
+
+@frappe.whitelist()
+def create_accrual_jv(amount, debit_account, credit_account, date, remarks):
+    jv = frappe.get_doc({
+        'doctype': 'Journal Entry',
+        'posting_date': date,
+        'accounts': [{
+            'account': debit_account,
+            'debit_in_account_currency': amount
+        },
+        {
+            'account': credit_account,
+            'credit_in_account_currency': amount
+        }],
+        'user_remark': remarks
+    })
+    jv.insert(ignore_permissions=True)
+    jv.submit()
+    
+    return jv.name
