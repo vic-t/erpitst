@@ -41,7 +41,7 @@ def execute(filters=None):
         {'fieldname': 'item_group', 'label': _('Item Group'), 'fieldtype': 'Link', 'options': 'Item Group', 'width': 100}, 
         {'fieldname': 'volume', 'label': _('Volume'), 'fieldtype': 'Currency', 'width': 100},
         {'fieldname': 'volume_ytd', 'label': _('Volume YTD'), 'fieldtype': 'Currency', 'width': 100},
-        {'fieldname': 'commission_rate', 'label': _('Commission %'), 'fieldtype': 'Percent', 'width': 100},
+        #{'fieldname': 'commission_rate', 'label': _('Commission %'), 'fieldtype': 'Percent', 'width': 100},
         {'fieldname': 'commission', 'label': _('Commission'), 'fieldtype': 'Currency', 'width': 100},
         {'fieldname': 'volume_q', 'label': _('Volume Quarter'), 'fieldtype': 'Currency', 'width': 100},
         {'fieldname': 'target', 'label': _('Target'), 'fieldtype': 'Currency', 'width': 100},
@@ -58,15 +58,19 @@ def execute(filters=None):
             'volume_ytd': get_volume(filters.sales_partner, ytd_from, to_date, v),
             'volume_q': get_volume(filters.sales_partner, start_q, end_q, v)
         }
-        # find commission rate based on ytd
+        # find commission based on ytd
+        previous_amount =  row['volume_ytd'] - row['volume']      # this amount already had commission paid
+        commission = 0
         for c in sales_partner.commissions:
-            if c.item_group == k and row['volume_ytd'] >= c.from_amount and row['volume_ytd'] <= c.to_amount:
-                row['commission_rate'] = c.provision
-                break
-        if 'commission_rate' not in row:
-            row['commission_rate'] = 0
-        # set commission amount
-        row['commission'] = row['volume'] * (row['commission_rate'] / 100)
+            if c.item_group == k:                                       # only use affected item group
+                if row['volume_ytd'] >= c.from_amount:                  # revenue above lower threshhold: applicable
+                    if previous_amount < c.to_amount:
+                        if row['volume_ytd'] > c.to_amount:             # overexceeded: fill
+                            commission += (c.to_amount - previous_amount) * (c.provision / 100)
+                            previous_amount = c.to_amount
+                        else:                                           # gap
+                            commission += (row['volume_ytd'] - previous_amount) * (c.provision / 100)
+        row['commission'] = commission
         
         # bonus calculation
         target = 1
