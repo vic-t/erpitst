@@ -11,6 +11,7 @@ def get_invoiceable_timesheets(from_date, to_date, project):
             `tabTimesheet Detail`.`name` AS `ts_detail`, 
             `tabTimesheet Detail`.`parent` AS `timesheet`, 
             `tabTimesheet Detail`.`billing_hours` AS `billing_hours`, 
+            `tabTimesheet Detail`.`hours` AS `hours`, 
             `tabTimesheet Detail`.`remarks` AS `remarks`, 
             `tabTimesheet Detail`.`billing_rate` AS `billing_rate`,
             `tabTimesheet Detail`.`category` AS `category`,
