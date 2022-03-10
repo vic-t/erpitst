@@ -79,6 +79,13 @@ def get_data():
                        "label": _("Kommissionsberechnung"),
                        "doctype": "Sales Invoice",
                        "is_query_report": True
+                   },
+                   {
+                       "type": "report",
+                       "name": "STP Lizenzumsatz",
+                       "label": _("STP Lizenzumsatz"),
+                       "doctype": "Serial No",
+                       "is_query_report": True
                    }
             ]
         },
