@@ -16,7 +16,9 @@ app_license = "GPL"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/itst/css/itst.css"
-# app_include_js = "/assets/itst/js/itst.js"
+app_include_js = [
+    "/assets/itst/js/itst_common.js"
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/itst/css/itst.css"
@@ -27,7 +29,9 @@ app_license = "GPL"
 
 # include js in doctype views
 doctype_js = {
-    "Customer" : "public/js/customer.js"
+    "Customer" : "public/js/customer.js",
+    "Item" : "public/js/item.js",
+    "Serial No" : "public/js/serial_no.js"
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}

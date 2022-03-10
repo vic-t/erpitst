@@ -81,5 +81,23 @@ def get_data():
                        "is_query_report": True
                    }
             ]
+        },
+        {
+            "label": _("Einstellungen"),
+            "icon": "octicon octicon-repo",
+            "items": [
+                   {
+                       "type": "doctype",
+                       "name": "Signature",
+                       "label": _("Signature"),
+                       "description": _("Signature")
+                   },
+                   {
+                       "type": "doctype",
+                       "name": "Email Footer Temaplte",
+                       "label": _("Email Footer Temaplte"),
+                       "description": _("Email Footer Temaplte")
+                   }
+            ]
         }
     ]

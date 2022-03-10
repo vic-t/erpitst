@@ -1,0 +1,101 @@
+{
+ "autoname": "field:user",
+ "creation": "2022-03-10 21:25:50.772158",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "user_name",
+  "function",
+  "phone",
+  "mobile",
+  "section_email_footer",
+  "email_footer_template",
+  "email_footer"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "user.full_name",
+   "fieldname": "user_name",
+   "fieldtype": "Data",
+   "label": "User name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "function",
+   "fieldtype": "Data",
+   "label": "Function"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile"
+  },
+  {
+   "fieldname": "section_email_footer",
+   "fieldtype": "Section Break",
+   "label": "Email Footer"
+  },
+  {
+   "fieldname": "email_footer_template",
+   "fieldtype": "Link",
+   "label": "Template",
+   "options": "Email Footer Template"
+  },
+  {
+   "fieldname": "email_footer",
+   "fieldtype": "Code",
+   "label": "Email Footer",
+   "read_only": 1
+  }
+ ],
+ "modified": "2022-03-10 21:26:21.905587",
+ "modified_by": "Administrator",
+ "module": "ITST",
+ "name": "Signature",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "user_name",
+ "track_changes": 1
+}

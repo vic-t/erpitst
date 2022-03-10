@@ -3,6 +3,13 @@
 
 from __future__ import unicode_literals
 import frappe
+import pypdftk
+from frappe.core.doctype.file.file import create_new_folder
+from frappe.utils.file_manager import save_file
+from PyPDF2 import PdfFileMerger
+import uuid
+from frappe.utils.file_manager import save_file
+from frappe.utils import get_bench_path, get_files_path
 
 @frappe.whitelist()
 def get_invoiceable_timesheets(from_date, to_date, project):
@@ -58,3 +65,34 @@ def create_accrual_jv(amount, debit_account, credit_account, date, remarks):
     jv.submit()
     
     return jv.name
+
+@frappe.whitelist()
+def create_combined_pdf(dt, dn, print_format):
+    # first, fill cover page
+    doc = frappe.get_doc(dt, dn)
+    data = {
+        'customer': doc.customer_name,
+        'date': doc.get_formatted('posting_Date'),
+        'title': doc.title
+    }
+    # generate pdf
+    generated_pdf = pypdftk.fill_form("{0}{1}/coverpage.pdf".format(get_bench_path(), get_files_path()[1:]), data)
+    with open(generated_pdf, mode='rb') as file:
+        cover_pdf_data = file.read()
+    # create normal print format
+    html = frappe.get_print(dt, dn, print_format)
+    content_pdf = frappe.utils.pdf.get_pdf(html)
+    # merge the two
+    merger = PdfFileMerger()
+    merger.append(cover_pdf_data)
+    merger.append(content_pdf)
+    tmp_name = "/tmp/{0}.pdf".format(uuid.uuid4().hex)
+    merger.write(tmp_name)
+    merger.close()
+    # load and attach
+    with open(tmp_name, mode='rb') as file:
+        combined_pdf_data = file.read()
+    file_name = "{}.pdf".format(doc.name.replace(" ", "-").replace("/", "-"))
+    save_file(file_name, combined_pdf_data, dt,
+              dn, folder="Attachments", is_private=1)   
+    return
