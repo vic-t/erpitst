@@ -86,6 +86,13 @@ def get_data():
                        "label": _("STP Lizenzumsatz"),
                        "doctype": "Serial No",
                        "is_query_report": True
+                   },
+                   {
+                       "type": "report",
+                       "name": "Offene TS-Positionen",
+                       "label": _("Offene TS-Positionen"),
+                       "doctype": "Timesheet",
+                       "is_query_report": True
                    }
             ]
         },
