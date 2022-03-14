@@ -18,7 +18,8 @@ function cache_email_footer() {
                 } 
             }
         });
-    } catch { 
+    } catch (e) { 
         console.log("signature not found"); 
     }
 }
+
