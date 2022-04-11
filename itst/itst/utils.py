@@ -10,6 +10,9 @@ from PyPDF2 import PdfFileMerger
 import uuid
 from frappe.utils.file_manager import save_file
 from frappe.utils import get_bench_path, get_files_path
+import random
+import string
+import os
 
 @frappe.whitelist()
 def get_invoiceable_timesheets(from_date, to_date, project):
@@ -72,28 +75,39 @@ def create_combined_pdf(dt, dn, print_format):
     # first, fill cover page
     doc = frappe.get_doc(dt, dn)
     data = {
-        'customer': doc.customer_name,
-        'date': doc.get_formatted('posting_Date'),
-        'title': doc.title
+        'RecipientName': doc.customer_name,
+        'DocDate': doc.get_formatted('transaction_date'),
+        'DocTitle': doc.title
     }
     # generate pdf
-    generated_pdf = pypdftk.fill_form("{0}/sites/{1}/coverpage.pdf".format(get_bench_path(), get_files_path()[1:]), data)
-    with open(generated_pdf, mode='rb') as file:
-        cover_pdf_data = file.read()
+    generated_pdf = pypdftk.fill_form("{0}/sites{1}/coverpage.pdf".format(get_bench_path(), get_files_path()[1:]), data)
     # create normal print format
     html = frappe.get_print(dt, dn, print_format)
     content_pdf = frappe.utils.pdf.get_pdf(html)
+    content_file_name = "/tmp/{0}.pdf".format(get_random_string(32))
+    with open(content_file_name, mode='wb') as file:
+        file.write(content_pdf)
     # merge the two
     merger = PdfFileMerger()
-    merger.append(cover_pdf_data)
-    merger.append(content_pdf)
+    merger.append(generated_pdf)
+    merger.append(content_file_name)
     tmp_name = "/tmp/{0}.pdf".format(uuid.uuid4().hex)
     merger.write(tmp_name)
     merger.close()
+    cleanup(content_file_name)
     # load and attach
     with open(tmp_name, mode='rb') as file:
         combined_pdf_data = file.read()
     file_name = "{}.pdf".format(doc.name.replace(" ", "-").replace("/", "-"))
     save_file(file_name, combined_pdf_data, dt,
-              dn, folder="Attachments", is_private=1)   
+              dn, is_private=1)   
     return
+
+def get_random_string(length):
+    letters = string.ascii_lowercase
+    result_str = ''.join(random.choice(letters) for i in range(length))
+    return result_str
+    
+def cleanup(fname):
+    if os.path.exists(fname):
+        os.remove(fname)
