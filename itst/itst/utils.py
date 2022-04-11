@@ -77,7 +77,7 @@ def create_combined_pdf(dt, dn, print_format):
         'title': doc.title
     }
     # generate pdf
-    generated_pdf = pypdftk.fill_form("{0}{1}/coverpage.pdf".format(get_bench_path(), get_files_path()[1:]), data)
+    generated_pdf = pypdftk.fill_form("{0}/sites/{1}/coverpage.pdf".format(get_bench_path(), get_files_path()[1:]), data)
     with open(generated_pdf, mode='rb') as file:
         cover_pdf_data = file.read()
     # create normal print format
