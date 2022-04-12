@@ -25,6 +25,24 @@ frappe.query_reports["Offene TS-Positionen"] = {
             "fieldname":"to_date",
             "label": __("To Date"),
             "fieldtype": "Date"
+        },
+        {
+            "fieldname":"employee",
+            "label": __("Employee"),
+            "fieldtype": "Link",
+            "options": "Employee"
+        },
+        {
+            "fieldname":"show_all",
+            "label": __("Alle Projekte anzeigen"),
+            "fieldtype": "Check",
+            "default": 0
+        },
+        {
+            "fieldname":"show_invoiced",
+            "label": __("Auch verrechnete anzeigen"),
+            "fieldtype": "Check",
+            "default": 0
         }
     ],
     "initial_depth": 0
