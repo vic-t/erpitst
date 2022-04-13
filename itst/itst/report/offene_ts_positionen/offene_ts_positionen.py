@@ -119,7 +119,7 @@ def get_data(filters):
                 `tabTimesheet`.`employee` AS `employee`,
                 `tabTimesheet`.`name` AS `timesheet`,
                 `tabTimesheet`.`employee_name` AS `employee_name`,  
-                `tabTimesheet Detail`.`activity_type` AS `acitvity`, 
+                `tabTimesheet Detail`.`activity_type` AS `activity`, 
                 `tabTimesheet Detail`.`remarks` AS `remarks`, 
                 `tabTimesheet Detail`.`category` AS `category`, 
                 `tabProject`.`status` AS `status`,
