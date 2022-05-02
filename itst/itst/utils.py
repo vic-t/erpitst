@@ -80,7 +80,7 @@ def create_combined_pdf(dt, dn, print_format):
         'DocTitle': doc.title
     }
     # generate pdf
-    generated_pdf = pypdftk.fill_form("{0}/sites/sites{1}/coverpage.pdf".format(get_bench_path(), get_files_path()[1:]), data)
+    generated_pdf = pypdftk.fill_form("{0}/sites{1}/coverpage.pdf".format(get_bench_path(), get_files_path()[1:]), data)
     # create normal print format
     content_pdf = frappe.get_print(dt, dn, print_format=print_format, as_pdf=True)
     content_file_name = "/tmp/{0}.pdf".format(get_random_string(32))
