@@ -8,12 +8,21 @@ frappe.ui.form.on('Timesheet', {
 
 frappe.ui.form.on('Timesheet Detail', {
     duration(frm, cdt, cdn) {
-        var duration_str = frappe.model.get_value(cdt, cdn, 'duration');
-        if (duration_str) {
-            var str_parts = duration_str.split(":")
-            var duration_min = parseInt(str_parts[0]) * 60 + parseInt(str_parts[1]);
-            var duration_h = duration_min/60;
-            frappe.model.set_value(cdt, cdn, 'hours', duration_h);
-        }
+        var duration_h = get_hrs_from_duration(frappe.model.get_value(cdt, cdn, 'duration'));
+        frappe.model.set_value(cdt, cdn, 'hours', duration_h);
+    },
+    billing_duration(frm, cdt, cdn) {
+        var duration_h = get_hrs_from_duration(frappe.model.get_value(cdt, cdn, 'duration'));
+        frappe.model.set_value(cdt, cdn, 'hours', duration_h);
     }
 });
+
+function get_hrs_from_duration(duration) {
+    var duration_h = null;
+    if (duration) {
+        var str_parts = duration.split(":")
+        var duration_min = parseInt(str_parts[0]) * 60 + parseInt(str_parts[1]);
+        duration_h = duration_min/60;
+    }
+    return duration_h;
+}
