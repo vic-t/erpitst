@@ -13,7 +13,7 @@ frappe.ui.form.on('Timesheet Detail', {
     },
     billing_duration(frm, cdt, cdn) {
         var duration_h = get_hrs_from_duration(frappe.model.get_value(cdt, cdn, 'duration'));
-        frappe.model.set_value(cdt, cdn, 'hours', duration_h);
+        frappe.model.set_value(cdt, cdn, 'billing_hours', duration_h);
     }
 });
 
