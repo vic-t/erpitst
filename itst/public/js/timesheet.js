@@ -20,7 +20,7 @@ frappe.ui.form.on('Timesheet Detail', {
 function get_hrs_from_duration(duration) {
     var duration_h = null;
     if (duration) {
-        var str_parts = duration.split(":")
+        var str_parts = duration.split(":");
         var duration_min = parseInt(str_parts[0]) * 60 + parseInt(str_parts[1]);
         duration_h = duration_min/60;
     }
