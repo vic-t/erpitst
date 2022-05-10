@@ -8,8 +8,10 @@ cur_frm.dashboard.add_transactions([
 
 frappe.ui.form.on('Customer', {
     refresh(frm) {
-        frm.add_custom_button(__("Offene TS-Positionen"), function() {
-            frappe.set_route("query-report", "Offene TS-Positionen", {"customer": frm.doc.name});
-        });
+        if (!frm.doc.__islocal) {
+            frm.add_custom_button(__("Offene TS-Positionen"), function() {
+                frappe.set_route("query-report", "Offene TS-Positionen", {"customer": frm.doc.name});
+            });
+        }
     }
 });
