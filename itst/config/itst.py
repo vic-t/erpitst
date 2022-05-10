@@ -111,6 +111,12 @@ def get_data():
                        "name": "Email Footer Temaplte",
                        "label": _("Email Footer Temaplte"),
                        "description": _("Email Footer Temaplte")
+                   },
+                   {
+                       "type": "doctype",
+                       "name": "Batch",
+                       "label": _("Batch"),
+                       "description": _("Batch")
                    }
             ]
         }
