@@ -3,7 +3,11 @@ cur_frm.dashboard.add_transactions([
     {
         'label': 'Abo',
         'items': ['Abo']
-    } 
+    },
+    {
+        'label': 'Lizenzen',
+        'items': ['Batch']
+    }  
 ]);
 
 frappe.ui.form.on('Customer', {

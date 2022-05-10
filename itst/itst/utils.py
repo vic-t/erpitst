@@ -110,3 +110,17 @@ def get_random_string(length):
 def cleanup(fname):
     if os.path.exists(fname):
         os.remove(fname)
+
+"""
+This function will apply the customer to each linked batch of a delivery note
+"""
+@frappe.whitelist()
+def set_batch_customer(delivery_note):
+    dn = frappe.get_doc("Delivery Note", delivery_note)
+    for i in dn.items:
+        if i.batch_no:
+            batch = frappe.get_doc("Batch", i.batch_no)
+            batch.customer = dn.customer
+            batch.save(ignore_permissions=True)
+    frappe.db.commit()
+    return

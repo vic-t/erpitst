@@ -1,1 +1,3 @@
 DocType: Timesheet,Billing Duration,Verrechenbare Dauer
+DocType: Batch,End Customer,Endkunde
+DocType:Batch,End Customer name,Endkundenname
