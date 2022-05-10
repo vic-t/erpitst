@@ -54,7 +54,7 @@ def get_data(filters):
             `tabSerial No`.`delivery_date` AS `out_date`,
             IFNULL(`tabSerial No`.`end_customer`, `tabSerial No`.`customer`) AS `customer`,
             IFNULL(`tabSerial No`.`end_customer_name`,`tabSerial No`.`customer_name`) AS `customer_name`,
-            `tabDelivery Note Item`.`base_net_amount` AS `net_volume`,
+            `tabDelivery Note Item`.`base_rate` AS `net_volume`,
             `tabSerial No`.`serial_no_details` AS `details`
         FROM `tabSerial No`
         LEFT JOIN `tabDelivery Note Item` ON (`tabDelivery Note Item`.`parent` = `tabSerial No`.`delivery_document_no` 
