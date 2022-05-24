@@ -1,5 +1,5 @@
 {
- "add_total_row": 0,
+ "add_total_row": 1,
  "creation": "2022-05-23 21:44:22.329642",
  "disable_prepared_report": 0,
  "disabled": 0,
@@ -8,7 +8,7 @@
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": "Standard",
- "modified": "2022-05-23 21:44:22.329642",
+ "modified": "2022-05-24 21:55:26.478130",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Liqplan",
