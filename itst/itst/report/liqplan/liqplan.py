@@ -6,6 +6,7 @@ import frappe
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from frappe import _
+from frappe.utils import cint
 
 def execute(filters=None):
     columns = get_columns()
@@ -29,8 +30,108 @@ def get_columns():
         {'fieldname': 'm12', 'label': date.today() + relativedelta(months=+12), 'fieldtype': 'Currency', 'width': 100}
     ]
     
-def get_data(filters):
-    dates = [
+def get_data(filters, only_heads=False):
+    dates = get_dates()
+    data = []
+    # opportunities
+    _data = {
+        'description': "Chancen"
+    }
+    if not only_heads:
+        for i in range(1,13):
+            if i < 4:
+                _data["m{0}".format(i)] = frappe.db.sql("""
+                    SELECT IFNULL(SUM(`opportunity_amount` * `probability` / 100), 0) AS `sum`
+                    FROM `tabOpportunity`
+                    WHERE `transaction_date` > "{from_date}" 
+                      AND `transaction_date` <= "{end_date}"
+                      AND `status` = "Open";
+                    """.format(from_date=dates[i-1], end_date=dates[i]), as_dict=True)[0]['sum']
+            else:
+                _data["m{0}".format(i)] = 0
+    data.append(_data)
+    
+    # quotations
+    _data = {
+        'description': "Angebote"
+    }
+    if not only_heads:
+        for i in range(1,13):
+            if i < 4:
+                _data["m{0}".format(i)] = frappe.db.sql("""
+                    SELECT IFNULL(SUM(`base_net_total` * 0.65), 0) AS `sum`
+                    FROM `tabQuotation`
+                    WHERE `valid_till` > "{from_date}" 
+                      AND `valid_till` <= "{end_date}"
+                      AND `docstatus` = 1
+                      AND `status` = "Open";
+                    """.format(from_date=dates[i-1], end_date=dates[i]), as_dict=True)[0]['sum']
+            else:
+                _data["m{0}".format(i)] = 0
+    data.append(_data)
+    
+    # sales orders
+    _data = {
+        'description': "Aufträge"
+    }
+    if not only_heads:
+        for i in range(1,13):
+            if i < 4:
+                _data["m{0}".format(i)] = frappe.db.sql("""
+                    SELECT IFNULL(SUM(`base_net_total` * 0.85), 0) AS `sum`
+                    FROM `tabSales Order`
+                    WHERE `delivery_date` > "{from_date}" 
+                      AND `delivery_date` <= "{end_date}"
+                      AND `docstatus` = 1;
+                    """.format(from_date=dates[i-1], end_date=dates[i]), as_dict=True)[0]['sum']
+            else:
+                _data["m{0}".format(i)] = 0
+    data.append(_data)
+    
+    # support
+    _data = {
+        'description': "Support"
+    }
+    if not only_heads:
+        last_average = frappe.db.sql("""
+            SELECT IFNULL(SUM(`tabSales Invoice Item`.`base_net_amount`), 0) AS `sum`
+            FROM `tabSales Invoice Item`
+            LEFT JOIN `tabSales Invoice` ON `tabSales Invoice`.`name` = `tabSales Invoice Item`.`parent`
+            WHERE `tabSales Invoice`.`posting_date` > "{from_date}" 
+              AND `tabSales Invoice`.`posting_date` <= "{end_date}"
+              AND `tabSales Invoice`.`docstatus` = 1
+              AND `tabSales Invoice Item`.`item_code` = "IT-Support";
+            """.format(from_date=date.today() + relativedelta(months=-3), end_date=date.today()), as_dict=True)[0]['sum']
+        for i in range(1,13):
+            if i < 4:
+                _data["m{0}".format(i)] = 0.9 * (last_average / 3)
+            else:
+                _data["m{0}".format(i)] = 0
+    data.append(_data)
+    
+    # add values from budget
+    budget_accounts = get_budget_acounts()
+    for account in budget_accounts:
+        _data = {
+            'description': account['account']
+        }
+        if not only_heads:
+            for i in range(1,13):
+                if account['account_type'] == "Expense Account":
+                    sign = -1       # expense account
+                else:
+                    if i < 4:
+                        sign = 0    # first three months: use sales pipeline instead of budget
+                    else:
+                        sign = 1    # use budget for income
+                _data["m{0}".format(i)] = sign * get_monthly_budget(dates[i], account['account'])
+                
+        data.append(_data)
+        
+    return data
+
+def get_dates():
+    return [
         date.today(),
         date.today() + relativedelta(months=+1),
         date.today() + relativedelta(months=+2),
@@ -45,99 +146,74 @@ def get_data(filters):
         date.today() + relativedelta(months=+11),
         date.today() + relativedelta(months=+12)
     ]
-    data = []
-    # opportunities
-    _data = {
-        'description': "Chancen"
-    }
-    for i in range(1,13):
-        if i < 4:
-            _data["m{0}".format(i)] = frappe.db.sql("""
-                SELECT IFNULL(SUM(`opportunity_amount` * `probability` / 100), 0) AS `sum`
-                FROM `tabOpportunity`
-                WHERE `transaction_date` > "{from_date}" 
-                  AND `transaction_date` <= "{end_date}"
-                  AND `status` = "Open";
-                """.format(from_date=dates[i-1], end_date=dates[i]), as_dict=True)[0]['sum']
-        else:
-            _data["m{0}".format(i)] = 0
-    data.append(_data)
     
-    # quotations
-    _data = {
-        'description': "Angebote"
-    }
-    for i in range(1,13):
-        if i < 4:
-            _data["m{0}".format(i)] = frappe.db.sql("""
-                SELECT IFNULL(SUM(`base_net_total` * 0.65), 0) AS `sum`
-                FROM `tabQuotation`
-                WHERE `valid_till` > "{from_date}" 
-                  AND `valid_till` <= "{end_date}"
-                  AND `docstatus` = 1
-                  AND `status` = "Open";
-                """.format(from_date=dates[i-1], end_date=dates[i]), as_dict=True)[0]['sum']
-        else:
-            _data["m{0}".format(i)] = 0
-    data.append(_data)
+def get_query(method, from_date, to_date):
+    if method == "Chancen":
+        return """
+            SELECT 
+                `name`,
+                (`opportunity_amount` * `probability` / 100) AS `amount`
+            FROM `tabOpportunity`
+            WHERE `transaction_date` > "{from_date}" 
+              AND `transaction_date` <= "{end_date}"
+              AND `status` = "Open";
+            """.format(from_date=from_date, end_date=to_date)
+    elif method == "Angebote":
+        return """
+            SELECT 
+                `name`,
+                (`base_net_total` * 0.65) AS `amount`
+            FROM `tabQuotation`
+                    WHERE `valid_till` > "{from_date}" 
+                      AND `valid_till` <= "{end_date}"
+                      AND `docstatus` = 1
+                      AND `status` = "Open";
+            """.format(from_date=from_date, end_date=to_date)
+    elif method == "Aufträge":
+        return """
+            SELECT 
+                `name`,
+                (`base_net_total` * 0.85) AS `amount`
+            FROM `tabSales Order`
+                    WHERE `delivery_date` > "{from_date}" 
+                      AND `delivery_date` <= "{end_date}"
+                      AND `docstatus` = 1;
+            """.format(from_date=from_date, end_date=to_date)
+    elif method == "Support":
+        return """
+            SELECT 
+                `tabSales Invoice`.`name`,
+                (`tabSales Invoice Item`.`base_net_amount` * 0.9) AS `amount`
+            FROM `tabSales Invoice Item`
+            LEFT JOIN `tabSales Invoice` ON `tabSales Invoice`.`name` = `tabSales Invoice Item`.`parent`
+            WHERE `tabSales Invoice`.`posting_date` > "{from_date}" 
+              AND `tabSales Invoice`.`posting_date` <= "{end_date}"
+              AND `tabSales Invoice`.`docstatus` = 1
+              AND `tabSales Invoice Item`.`item_code` = "IT-Support";
+            """.format(from_date=date.today() + relativedelta(months=-3), end_date=date.today())
+    elif frappe.db.exists("Account", method):
+        return """
+            SELECT 
+                `tabBudget`.`name`, 
+                `tabFiscal Year`.`year_start_date`,
+                `tabFiscal Year`.`year_end_date`,
+                `tabBudget Account`.`account`,
+                `tabBudget Account`.`budget_amount`,
+                `tabMonthly Distribution Percentage`.`month`,
+                `tabMonthly Distribution Percentage`.`percentage_allocation`,
+                IFNULL(`tabBudget Account`.`budget_amount` * `tabMonthly Distribution Percentage`.`percentage_allocation`/100 , 0) AS `amount`
+            FROM `tabBudget Account` 
+            LEFT JOIN `tabBudget` ON `tabBudget`.`name` = `tabBudget Account`.`parent`
+            LEFT JOIN `tabFiscal Year` ON `tabBudget`.`fiscal_year` = `tabFiscal Year`.`name`
+            JOIN `tabMonthly Distribution Percentage` ON `tabMonthly Distribution Percentage`.`parent` = `tabBudget`.`monthly_distribution`
+            WHERE `tabFiscal Year`.`year_start_date` <= "{date}"
+              AND `tabFiscal Year`.`year_end_date` >= "{date}"
+              AND `tabMonthly Distribution Percentage`.`month` = "{month}"
+              AND `tabBudget Account`.`account` = "{account}";
+            """.format(date=to_date, month=get_month_from_date(to_date), account=method)
+    else:
+        return ""
     
-    # sales orders
-    _data = {
-        'description': "Aufträge"
-    }
-    for i in range(1,13):
-        if i < 4:
-            _data["m{0}".format(i)] = frappe.db.sql("""
-                SELECT IFNULL(SUM(`base_net_total` * 0.85), 0) AS `sum`
-                FROM `tabSales Order`
-                WHERE `delivery_date` > "{from_date}" 
-                  AND `delivery_date` <= "{end_date}"
-                  AND `docstatus` = 1;
-                """.format(from_date=dates[i-1], end_date=dates[i]), as_dict=True)[0]['sum']
-        else:
-            _data["m{0}".format(i)] = 0
-    data.append(_data)
-    
-    # support
-    _data = {
-        'description': "Support"
-    }
-    last_average = frappe.db.sql("""
-        SELECT IFNULL(SUM(`tabSales Invoice Item`.`base_net_amount`), 0) AS `sum`
-        FROM `tabSales Invoice Item`
-        LEFT JOIN `tabSales Invoice` ON `tabSales Invoice`.`name` = `tabSales Invoice Item`.`parent`
-        WHERE `tabSales Invoice`.`posting_date` > "{from_date}" 
-          AND `tabSales Invoice`.`posting_date` <= "{end_date}"
-          AND `tabSales Invoice`.`docstatus` = 1
-          AND `tabSales Invoice Item`.`item_code` = "IT-Support";
-        """.format(from_date=date.today() + relativedelta(months=-3), end_date=date.today()), as_dict=True)[0]['sum']
-    for i in range(1,13):
-        if i < 4:
-            _data["m{0}".format(i)] = 0.9 * (last_average / 3)
-        else:
-            _data["m{0}".format(i)] = 0
-    data.append(_data)
-    
-    # add values from budget
-    budget_accounts = get_budget_acounts()
-    for account in budget_accounts:
-        _data = {
-            'description': account['account']
-        }
-        for i in range(1,13):
-            if account['account_type'] == "Expense Account":
-                sign = -1       # expense account
-            else:
-                if i < 4:
-                    sign = 0    # first three months: use sales pipeline instead of budget
-                else:
-                    sign = 1    # use budget for income
-            _data["m{0}".format(i)] = sign * get_monthly_budget(dates[i], account['account'])
-            
-        data.append(_data)
-        
-    return data
-
 def get_budget_acounts():
     accounts = frappe.db.sql("""
         SELECT 
@@ -153,22 +229,7 @@ def get_budget_acounts():
     return accounts
     
 def get_monthly_budget(date, account):
-    month_int = str(date)[5:7]
-    month_mapping = {
-        '01': 'January',
-        '02': 'February',
-        '03': 'March',
-        '04': 'April',
-        '05': 'May',
-        '06': 'June',
-        '07': 'July',
-        '08': 'August',
-        '09': 'September',
-        '10': 'October',
-        '11': 'November',
-        '12': 'December'
-    }
-    month = month_mapping[month_int]
+    month = get_month_from_date(date)
         
     sql_query = """
         SELECT 
@@ -195,4 +256,35 @@ def get_monthly_budget(date, account):
         return data[0]['amount']
     else:
         return 0
-    
+
+def get_month_from_date(date):
+    month_int = str(date)[5:7]
+    month_mapping = {
+        '01': 'January',
+        '02': 'February',
+        '03': 'March',
+        '04': 'April',
+        '05': 'May',
+        '06': 'June',
+        '07': 'July',
+        '08': 'August',
+        '09': 'September',
+        '10': 'October',
+        '11': 'November',
+        '12': 'December'
+    }
+    return month_mapping[month_int]
+
+@frappe.whitelist()
+def show_details(row, column):
+    if cint(column) > 1:
+        dates = get_dates()
+        methods = get_data(None, only_heads=True)
+        sql_query = get_query(methods[cint(row)]['description'], dates[cint(column)-2], dates[cint(column)-1])
+        if sql_query:
+            output = frappe.db.sql(sql_query, as_dict=True)
+            html = "<table class=\"table\"><thead><tr><th>Name</th><th>Betrag</th></tr></thead><tbody>";
+            for o in output:
+                html += "<tr><td>{0}</td><td>{1}</td></tr>".format(o['name'], o['amount'])
+            html += "</tbody></table>"
+            frappe.msgprint("{0}".format(html), "Details")

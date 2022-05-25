@@ -7,3 +7,17 @@ frappe.query_reports["Liqplan"] = {
 
     ]
 };
+
+/* add event listener for double clicks to move up */
+cur_page.container.addEventListener("dblclick", function(event) {
+    var row = event.delegatedTarget.getAttribute("data-row-index");
+    var column = event.delegatedTarget.getAttribute("data-col-index");
+    //console.log("Row " + row + " column: " + column);
+    frappe.call({
+        'method': "itst.itst.report.liqplan.liqplan.show_details",
+        "args": {
+            "row": row,
+            "column": column
+        }
+    });
+});
