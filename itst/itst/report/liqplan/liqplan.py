@@ -109,6 +109,42 @@ def get_data(filters, only_heads=False):
                 _data["m{0}".format(i)] = 0
     data.append(_data)
     
+    # sales invoices
+    _data = {
+        'description': "Rechnungen"
+    }
+    if not only_heads:
+        for i in range(1,13):
+            if i < 4:
+                _data["m{0}".format(i)] = frappe.db.sql("""
+                    SELECT IFNULL(SUM(`outstanding_amount`), 0) AS `sum`
+                    FROM `tabSales Invoice`
+                    WHERE `due_date` > "{from_date}" 
+                      AND `due_date` <= "{end_date}"
+                      AND `docstatus` = 1;
+                    """.format(from_date=dates[i-1], end_date=dates[i]), as_dict=True)[0]['sum']
+            else:
+                _data["m{0}".format(i)] = 0
+    data.append(_data)
+    
+    # purchase invoices
+    _data = {
+        'description': "Lieferantenrechnungen"
+    }
+    if not only_heads:
+        for i in range(1,13):
+            if i < 4:
+                _data["m{0}".format(i)] = frappe.db.sql("""
+                    SELECT (-1) * IFNULL(SUM(`outstanding_amount`), 0) AS `sum`
+                    FROM `tabPurchase Invoice`
+                    WHERE `due_date` > "{from_date}" 
+                      AND `due_date` <= "{end_date}"
+                      AND `docstatus` = 1;
+                    """.format(from_date=dates[i-1], end_date=dates[i]), as_dict=True)[0]['sum']
+            else:
+                _data["m{0}".format(i)] = 0
+    data.append(_data)
+    
     # add values from budget
     budget_accounts = get_budget_acounts()
     for account in budget_accounts:
@@ -191,6 +227,26 @@ def get_query(method, from_date, to_date):
               AND `tabSales Invoice`.`docstatus` = 1
               AND `tabSales Invoice Item`.`item_code` = "IT-Support";
             """.format(from_date=date.today() + relativedelta(months=-3), end_date=date.today())
+    elif method == "Rechnungen":
+        return """
+            SELECT 
+                `tabSales Invoice`.`name`,
+                `tabSales Invoice`.`outstanding_amount` AS `amount`
+            FROM `tabSales Invoice`
+            WHERE `tabSales Invoice`.`due_date` > "{from_date}" 
+              AND `tabSales Invoice`.`due_date` <= "{end_date}"
+              AND `tabSales Invoice`.`docstatus` = 1;
+            """.format(from_date=from_date, end_date=to_date)
+    elif method == "Lieferantenrechnungen":
+        return """
+            SELECT 
+                `tabPurchase Invoice`.`name`,
+                (-1) * `tabPurchase Invoice`.`outstanding_amount` AS `amount`
+            FROM `tabPurchase Invoice`
+            WHERE `tabPurchase Invoice`.`due_date` > "{from_date}" 
+              AND `tabPurchase Invoice`.`due_date` <= "{end_date}"
+              AND `tabPurchase Invoice`.`docstatus` = 1;
+            """.format(from_date=from_date, end_date=to_date)
     elif frappe.db.exists("Account", method):
         return """
             SELECT 
