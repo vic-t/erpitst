@@ -100,6 +100,13 @@ def get_data():
                        "label": _("Liqplan"),
                        "doctype": "Sales Order",
                        "is_query_report": True
+                   },
+                   {
+                       "type": "report",
+                       "name": "Saldovorschau",
+                       "label": _("Saldovorschau"),
+                       "doctype": "Sales Invoice",
+                       "is_query_report": True
                    }
             ]
         },
