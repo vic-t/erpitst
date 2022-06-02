@@ -19,14 +19,14 @@ def execute(filters=None):
 
 def get_columns():
     return [
-        {'fieldname': 'project', 'label': _('Project'), 'fieldtype': 'Link', 'options': 'Project', 'width': 100},
-        {'fieldname': 'customer', 'label': _('Customer'), 'fieldtype': 'Link', 'options': 'Customer', 'width': 100},
+        {'fieldname': 'project', 'label': _('Project'), 'fieldtype': 'Link', 'options': 'Project', 'width': 150},
+        {'fieldname': 'customer', 'label': _('Customer'), 'fieldtype': 'Link', 'options': 'Customer', 'width': 75},
         {'fieldname': 'customer_name', 'label': _('Customer name'), 'fieldtype': 'Data', 'width': 150},
         {'fieldname': 'employee', 'label': _('Employee'), 'fieldtype': 'Link', 'options': 'Employee', 'width': 100},
         {'fieldname': 'employee_name', 'label': _('Full name'), 'fieldtype': 'Data', 'width': 100},
         {'fieldname': 'activity', 'label': _('Activity'), 'fieldtype': 'Data', 'width': 100},
-        {'fieldname': 'remarks', 'label': _('Beschreibung'), 'fieldtype': 'Data', 'width': 100},
-        {'fieldname': 'category', 'label': _('Kategorie'), 'fieldtype': 'Link', 'options': 'Item', 'width': 100},
+        {'fieldname': 'remarks', 'label': _('Beschreibung'), 'fieldtype': 'Data', 'width': 200},
+        {'fieldname': 'category', 'label': _('DL-Artikel'), 'fieldtype': 'Link', 'options': 'Item', 'width': 100},
         {'fieldname': 'billing_hours', 'label': _('Billing Hours'), 'fieldtype': 'Float', 'width': 100},
         {'fieldname': 'billing_amount', 'label': _('Billing Amount'), 'fieldtype': 'Currency', 'width': 100},
         {'fieldname': 'hours', 'label': _('Hours'), 'fieldtype': 'Float', 'width': 100},
@@ -140,6 +140,7 @@ def get_data(filters):
                AND ((`tabTimesheet Detail`.`from_time` >= "{from_date}" AND `tabTimesheet Detail`.`from_time` <= "{to_date}")
                 OR (`tabTimesheet Detail`.`to_time` >= "{from_date}" AND `tabTimesheet Detail`.`to_time` <= "{to_date}"))
                AND {customer_condition}
+            GROUP BY `tabTimesheet Detail`.`name`
             ORDER BY `tabTimesheet Detail`.`from_time` ASC;
         """.format(project=p['project'], from_date=from_date, to_date=to_date, customer_condition=customer_condition)
         timesheets = frappe.db.sql(sql_query, as_dict=True)
