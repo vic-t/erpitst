@@ -17,6 +17,12 @@ frappe.query_reports["Offene TS-Positionen"] = {
             "options": "Customer"
         },
         {
+            "fieldname":"task",
+            "label": __("Task"),
+            "fieldtype": "Link",
+            "options": "Task"
+        },
+        {
             "fieldname":"from_date",
             "label": __("From Date"),
             "fieldtype": "Date"

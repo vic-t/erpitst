@@ -34,6 +34,7 @@ def get_columns():
         {'fieldname': 'oldest', 'label': _('Oldest'), 'fieldtype': 'Date', 'width': 150},
         {'fieldname': 'newest', 'label': _('Newest'), 'fieldtype': 'Date', 'width': 150},
         {'fieldname': 'timesheet', 'label': _('Timesheet'), 'fieldtype': 'Link', 'options': 'Timesheet', 'width': 100},
+        {'fieldname': 'task', 'label': _('Task'), 'fieldtype': 'Link', 'options': 'Task', 'width': 120},
         {'fieldname': 'status', 'label': _('Status'), 'fieldtype': 'Data', 'width': 80},
         {'fieldname': 'sales_invoice', 'label': _('Sales Invoice'), 'fieldtype': 'Link', 'options': 'Sales Invoice', 'width': 100},
     ]
@@ -57,6 +58,8 @@ def get_data(filters):
         to_date = "2099-12-31"
     if filters.employee:
         customer_condition += """ AND `tabTimesheet`.`employee` = "{employee}" """.format(employee=filters.employee)
+    if filters.task:
+        customer_condition += """ AND `tabTimesheet Detail`.`task` = "{task}" """.format(task=filters.task)
         
     # if show all: no project status filters, otherwise only open
     if cint(filters.show_all) == 0:
@@ -108,6 +111,7 @@ def get_data(filters):
         sql_query = """
             SELECT 
                 `tabTimesheet Detail`.`project` AS `project`, 
+                `tabTimesheet Detail`.`task` AS `task`, 
                 `tabProject`.`customer` AS `customer`, 
                 SUM(`tabTimesheet Detail`.`billing_hours`) AS `billing_hours`,
                 SUM(`tabTimesheet Detail`.`billing_hours`) AS `hours`,
