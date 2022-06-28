@@ -75,8 +75,7 @@
    "fieldname": "invoices",
    "fieldtype": "Table",
    "label": "Sales Invoices",
-   "options": "Abo Invoice",
-   "read_only": 1
+   "options": "Abo Invoice"
   },
   {
    "fieldname": "section_remarks",
@@ -89,7 +88,7 @@
    "label": "Remarks"
   }
  ],
- "modified": "2022-03-30 20:25:40.350355",
+ "modified": "2022-06-28 13:36:58.757105",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Abo",

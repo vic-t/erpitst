@@ -7,6 +7,7 @@ import frappe
 from frappe.model.document import Document
 import datetime
 from frappe import _
+from datetime import datetime, timedelta
 
 class Abo(Document):
     def create_invoice(self):
@@ -14,11 +15,16 @@ class Abo(Document):
             'doctype': 'Sales Invoice',
             'customer': self.customer,
         })
+        contract_start = datetime.strptime(self.start_date, "%Y-%m-%d")
+        start_date = datetime(datetime.now().year, contract_start.month, contract_start.day)
+        end_date = start_date + timedelta(days=365)
+        
         for i in self.items:
             sinv.append('items', {
                 'item_code': i.item,
                 'qty': i.qty,
-                'rate': i.rate
+                'rate': i.rate,
+                'description': _("Periode: {0} - {1}").format(start_date.strftime("%d.%m.%Y"), end_date.strftime("%d.%m.%Y"))
             });
         
         # get default taxes
