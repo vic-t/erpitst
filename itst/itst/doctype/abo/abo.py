@@ -20,11 +20,14 @@ class Abo(Document):
         end_date = start_date + timedelta(days=365)
         
         for i in self.items:
+            default_description = frappe.get_value("Item", i.item, 'description')
+            description = "{0}<br>{1}".format(default_description, 
+                _("Periode: {0} - {1}").format(start_date.strftime("%d.%m.%Y"), end_date.strftime("%d.%m.%Y")))
             sinv.append('items', {
                 'item_code': i.item,
                 'qty': i.qty,
                 'rate': i.rate,
-                'description': _("Periode: {0} - {1}").format(start_date.strftime("%d.%m.%Y"), end_date.strftime("%d.%m.%Y"))
+                'description': description
             });
         
         # get default taxes
