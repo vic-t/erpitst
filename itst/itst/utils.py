@@ -13,6 +13,7 @@ from frappe.utils import get_bench_path, get_files_path
 import random
 import string
 import os
+from datetime import datetime, timedelta
 
 @frappe.whitelist()
 def get_invoiceable_timesheets(from_date, to_date, project):
@@ -64,23 +65,70 @@ def create_accrual_jv(amount, debit_account, credit_account, date, remarks, docu
             'credit_in_account_currency': amount
         }],
         'user_remark': remarks,
-        'cheque_no': document
+        'cheque_no': document,
+        'cheque_date': date
     })
     jv.insert(ignore_permissions=True)
     jv.submit()
+    
+    update_stp_accruals()
     
     return jv.name
 
 @frappe.whitelist()
 def cancel_accrual_jv(date, document):
+    docs = []
     jvs = frappe.get_all("Journal Entry", 
         filters={'docstatus': 1, 'posting_date': date, 'cheque_no': document}, 
         fields=['name'])
     for jv in jvs:
-        doc = frappe.get_doc("Journal Entry", js['name'])
+        doc = frappe.get_doc("Journal Entry", jv['name'])
         doc.cancel()
+        docs.append(doc.name) 
+    update_stp_accruals()
+    return ", ".join(docs)
+
+def update_stp_accruals():
+    settings = frappe.get_doc("ITST Settings", "ITST Settings")
+    if settings.stp_accrual_invoice and settings.stp_accrual_account:
+        amount = (-1) * frappe.db.sql("""
+            SELECT IFNULL((SUM(`debit`) - SUM(`credit`)), 0) AS `sum`
+            FROM `tabGL Entry`
+            WHERE `account` = "{0}"
+              AND `posting_date` <= CURDATE();""".format(settings.stp_accrual_account), as_dict=True)[0]['sum']
+        if amount >= 0:
+            update_purchase_invoice(settings.stp_accrual_invoice, amount)
+    else:
+        frappe.log_error("Unable to create accrual invoice: purchase invoice missing (see ITST Settings)", "update_stp_accrual")
     return
 
+def update_vat_accruals():
+    settings = frappe.get_doc("ITST Settings", "ITST Settings")
+    if settings.vat_accrual_invoice and settings.vat_accrual_accounts:
+        accounts = settings.vat_accrual_accounts.split(",")
+        amount = 0
+        for account in accounts:
+            amount += (-1) * frappe.db.sql("""
+                SELECT IFNULL((SUM(`debit`) - SUM(`credit`)), 0) AS `sum`
+                FROM `tabGL Entry`
+                WHERE `account` LIKE "{0}%"
+                  AND `posting_date` <= CURDATE();""".format(account), as_dict=True)[0]['sum']
+        if amount >= 0:
+            update_purchase_invoice(settings.vat_accrual_invoice, amount)
+    else:
+        frappe.log_error("Unable to create accrual invoice: purchase invoice missing (see ITST Settings)", "update_vat_accrual")
+    return
+
+def update_purchase_invoice(invoice, amount):
+    doc = frappe.get_doc("Purchase Invoice", invoice)
+    doc.items[0].rate = round(amount, 2)
+    doc.set_posting_time = 1
+    doc.posting_date = datetime.now()
+    doc.payment_schedule = []
+    doc.due_date = doc.posting_date + timedelta(days=30)
+    doc.save()
+    return
+    
 @frappe.whitelist()
 def create_combined_pdf(dt, dn, print_format):
     # first, fill cover page

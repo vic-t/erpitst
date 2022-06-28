@@ -116,6 +116,12 @@ def get_data():
             "items": [
                    {
                        "type": "doctype",
+                       "name": "ITST Settings",
+                       "label": _("ITST Settings"),
+                       "description": _("ITST Settings")
+                   },
+                   {
+                       "type": "doctype",
                        "name": "Signature",
                        "label": _("Signature"),
                        "description": _("Signature")

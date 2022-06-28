@@ -105,7 +105,8 @@ scheduler_events = {
 # 		"itst.tasks.all"
 # 	],
     "daily": [
-        "itst.itst.doctype.abo.abo.create_todays_invoices"
+        "itst.itst.doctype.abo.abo.create_todays_invoices",
+        "itst.itst.utils.update_vat_accruals"
     ]
 # 	"hourly": [
 # 		"itst.tasks.hourly"

@@ -139,7 +139,7 @@ def get_data(filters, only_heads=False):
                     FROM `tabPurchase Invoice`
                     WHERE `due_date` > "{from_date}" 
                       AND `due_date` <= "{end_date}"
-                      AND `docstatus` = 1;
+                      AND `docstatus` < 2;
                     """.format(from_date=dates[i-1], end_date=dates[i]), as_dict=True)[0]['sum']
             else:
                 _data["m{0}".format(i)] = 0
@@ -245,7 +245,7 @@ def get_query(method, from_date, to_date):
             FROM `tabPurchase Invoice`
             WHERE `tabPurchase Invoice`.`due_date` > "{from_date}" 
               AND `tabPurchase Invoice`.`due_date` <= "{end_date}"
-              AND `tabPurchase Invoice`.`docstatus` = 1;
+              AND `tabPurchase Invoice`.`docstatus` < 2;
             """.format(from_date=from_date, end_date=to_date)
     elif frappe.db.exists("Account", method):
         return """

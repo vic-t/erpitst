@@ -3,3 +3,4 @@ DocType: Batch,End Customer,Endkunde
 DocType: Batch,End Customer name,Endkundenname
 DocType: Sales Invoice,Please define a default sales taxes and charges template.,Bitte setzen Sie eine Standard-Vorlage für Verkaufssteuern und Gebühren
 DocType: Sales Invoice,Configuration missing,Fehlende Konfiguration
+DocType: ITST Settings, ITST Settings,ITST Einstellungen
