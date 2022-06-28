@@ -51,7 +51,7 @@ def test():
     return "all good"
 
 @frappe.whitelist()
-def create_accrual_jv(amount, debit_account, credit_account, date, remarks):
+def create_accrual_jv(amount, debit_account, credit_account, date, remarks, document):
     jv = frappe.get_doc({
         'doctype': 'Journal Entry',
         'posting_date': date,
@@ -63,12 +63,23 @@ def create_accrual_jv(amount, debit_account, credit_account, date, remarks):
             'account': credit_account,
             'credit_in_account_currency': amount
         }],
-        'user_remark': remarks
+        'user_remark': remarks,
+        'cheque_no': document
     })
     jv.insert(ignore_permissions=True)
     jv.submit()
     
     return jv.name
+
+@frappe.whitelist()
+def cancel_accrual_jv(date, document):
+    jvs = frappe.get_all("Journal Entry", 
+        filters={'docstatus': 1, 'posting_date': date, 'cheque_no': document}, 
+        fields=['name'])
+    for jv in jvs:
+        doc = frappe.get_doc("Journal Entry", js['name'])
+        doc.cancel()
+    return
 
 @frappe.whitelist()
 def create_combined_pdf(dt, dn, print_format):
