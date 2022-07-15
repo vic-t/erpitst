@@ -24,7 +24,7 @@ def execute(filters=None):
     sql_query = """SELECT
             `tabSales Invoice`.`posting_date` AS `date`,
             `tabSales Invoice`.`name` AS `sales_invoice`,
-            IFNULL(SUM(`tabSales Invoice Item`.`base_net_amount`), 0) AS `amount`
+            IFNULL(`tabSales Invoice Item`.`base_net_amount`, 0) AS `amount`
         FROM `tabSales Invoice Item`
         LEFT JOIN `tabSales Invoice` ON `tabSales Invoice`.`name` = `tabSales Invoice Item`.`parent`
         WHERE
