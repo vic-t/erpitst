@@ -13,7 +13,7 @@
                 <td>{{ n['date'] }}</td>
                 <td><a href="/desk#Form/{{ n['doctype'] }}/{{ n['name'] }}">{{ n['name'] }}</a></td>
                 <td>{{ n['party'] or "" }}</td>
-                <td>{{ n['amount'] }}</td>
+                <td>CHF {{ "{:,.2f}".format(n['amount']).replace(",", "'") }}</td>
             </tr>
         {% endfor %}
     </tbody>
