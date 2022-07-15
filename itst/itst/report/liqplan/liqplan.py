@@ -97,8 +97,8 @@ def get_data(filters, only_heads=False):
             SELECT IFNULL(SUM(`tabSales Invoice Item`.`base_net_amount`), 0) AS `sum`
             FROM `tabSales Invoice Item`
             LEFT JOIN `tabSales Invoice` ON `tabSales Invoice`.`name` = `tabSales Invoice Item`.`parent`
-            WHERE `tabSales Invoice`.`posting_date` > "{from_date}" 
-              AND `tabSales Invoice`.`posting_date` <= "{end_date}"
+            WHERE `tabSales Invoice`.`due_date` > "{from_date}" 
+              AND `tabSales Invoice`.`due_date` <= "{end_date}"
               AND `tabSales Invoice`.`docstatus` = 1
               AND `tabSales Invoice Item`.`item_code` = "IT-Support";
             """.format(from_date=date.today() + relativedelta(months=-3), end_date=date.today()), as_dict=True)[0]['sum']
@@ -187,7 +187,10 @@ def get_query(method, from_date, to_date):
     if method == "Chancen":
         return """
             SELECT 
+                "Opportunity" AS `doctype`,
                 `name`,
+                `transaction_date` AS `date`,
+                `customer_name` AS `party`,
                 (`opportunity_amount` * `probability` / 100) AS `amount`
             FROM `tabOpportunity`
             WHERE `transaction_date` > "{from_date}" 
@@ -197,7 +200,10 @@ def get_query(method, from_date, to_date):
     elif method == "Angebote":
         return """
             SELECT 
+                "Quotation" AS `doctype`,
                 `name`,
+                `valid_till` AS `date`,
+                `customer_name` AS `party`,
                 (`base_net_total` * 0.65) AS `amount`
             FROM `tabQuotation`
                     WHERE `valid_till` > "{from_date}" 
@@ -208,7 +214,10 @@ def get_query(method, from_date, to_date):
     elif method == "Aufträge":
         return """
             SELECT 
+                "Sales Order" AS `doctype`,
                 `name`,
+                `delivery_date` AS `date`,
+                `customer_name` AS `party`,
                 (`base_net_total` * 0.85) AS `amount`
             FROM `tabSales Order`
                     WHERE `delivery_date` > "{from_date}" 
@@ -218,19 +227,25 @@ def get_query(method, from_date, to_date):
     elif method == "Support":
         return """
             SELECT 
+                "Sales Invoice" AS `doctype`,
                 `tabSales Invoice`.`name`,
+                `tabSales Invoice`.`due_date` AS `date`,
+                `tabSales Invoice`.`customer_name` AS `party`,
                 (`tabSales Invoice Item`.`base_net_amount` * 0.9) AS `amount`
             FROM `tabSales Invoice Item`
             LEFT JOIN `tabSales Invoice` ON `tabSales Invoice`.`name` = `tabSales Invoice Item`.`parent`
-            WHERE `tabSales Invoice`.`posting_date` > "{from_date}" 
-              AND `tabSales Invoice`.`posting_date` <= "{end_date}"
+            WHERE `tabSales Invoice`.`due_date` > "{from_date}" 
+              AND `tabSales Invoice`.`due_date` <= "{end_date}"
               AND `tabSales Invoice`.`docstatus` = 1
               AND `tabSales Invoice Item`.`item_code` = "IT-Support";
             """.format(from_date=date.today() + relativedelta(months=-3), end_date=date.today())
     elif method == "Rechnungen":
         return """
             SELECT 
+                "Sales Invoice" AS `doctype`,
                 `tabSales Invoice`.`name`,
+                `tabSales Invoice`.`due_date` AS `date`,
+                `tabSales Invoice`.`customer_name` AS `party`,
                 `tabSales Invoice`.`outstanding_amount` AS `amount`
             FROM `tabSales Invoice`
             WHERE `tabSales Invoice`.`due_date` > "{from_date}" 
@@ -240,7 +255,10 @@ def get_query(method, from_date, to_date):
     elif method == "Lieferantenrechnungen":
         return """
             SELECT 
+                "Purchase Invoice" AS `doctype`,
                 `tabPurchase Invoice`.`name`,
+                `due_date` AS `date`,
+                `supplier_name` AS `party`,
                 (-1) * `tabPurchase Invoice`.`outstanding_amount` AS `amount`
             FROM `tabPurchase Invoice`
             WHERE `tabPurchase Invoice`.`due_date` > "{from_date}" 
@@ -250,7 +268,10 @@ def get_query(method, from_date, to_date):
     elif frappe.db.exists("Account", method):
         return """
             SELECT 
+                "Budget" AS `doctype`,
                 `tabBudget`.`name`, 
+                `tabFiscal Year`.`year_start_date` AS `date`,
+                NULL AS `party`,
                 `tabFiscal Year`.`year_start_date`,
                 `tabFiscal Year`.`year_end_date`,
                 `tabBudget Account`.`account`,
@@ -338,9 +359,8 @@ def show_details(row, column):
         methods = get_data(None, only_heads=True)
         sql_query = get_query(methods[cint(row)]['description'], dates[cint(column)-2], dates[cint(column)-1])
         if sql_query:
-            output = frappe.db.sql(sql_query, as_dict=True)
-            html = "<table class=\"table\"><thead><tr><th>Name</th><th>Betrag</th></tr></thead><tbody>";
-            for o in output:
-                html += "<tr><td>{0}</td><td>{1}</td></tr>".format(o['name'], o['amount'])
-            html += "</tbody></table>"
+            data = {
+                'items': frappe.db.sql(sql_query, as_dict=True)
+            }
+            html = frappe.render_template("itst/templates/includes/liqplan_detail.html", data)
             frappe.msgprint("{0}".format(html), "Details")
