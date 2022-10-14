@@ -37,6 +37,12 @@ class Abo(Document):
         tax_template = frappe.get_doc("Sales Taxes and Charges Template", default_taxes[0]['name'])
         sinv.taxes_and_charges = tax_template.name
         sinv.taxes = tax_template.taxes
+        
+        # Set Sales Partner to Default
+        sinv.sales_partner = 'ITST'
+        # Folgende Zeile hätte die gleiche Funktion
+        # sinv.sales_partner = frappe.get_doc("Sales Partner",'ITST').name
+        
         # create invoice record
         sinv.insert(ignore_permissions=True)
         
