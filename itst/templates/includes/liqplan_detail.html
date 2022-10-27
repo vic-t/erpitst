@@ -1,0 +1,20 @@
+<table class="table">
+    <thead>
+        <tr>
+            <th>{{ _("Date") }}</th>
+            <th>{{ _("Name") }}</th>
+            <th>{{ _("Party") }}</th>
+            <th>{{ _("Amount") }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for n in items %}
+            <tr>
+                <td>{{ n['date'] }}</td>
+                <td><a href="/desk#Form/{{ n['doctype'] }}/{{ n['name'] }}">{{ n['name'] }}</a></td>
+                <td>{{ n['party'] or "" }}</td>
+                <td>CHF {{ "{:,.2f}".format(n['amount']).replace(",", "'") }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

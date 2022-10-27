@@ -18,3 +18,27 @@ frappe.ui.form.on('Abo', {
         }
     }
 });
+
+frappe.ui.form.on('Abo Item', {
+   item: function(frm, cdt, cdn) {
+        var d = locals[cdt][cdn];
+        if (d.item) {
+            frappe.call({
+                'method': "frappe.client.get_list",
+                'args': {
+                    'doctype': "Item Price",
+                    'filters': [
+                        ["item_code","=", d.item],
+                        ["selling", "=", 1]
+                    ],
+                    'fields': ["price_list_rate"]
+                },
+                'callback': function(response) {
+                    if ((response.message) && (response.message.length > 0)) {
+                        frappe.model.set_value(cdt, cdn, "rate", response.message[0].price_list_rate);
+                    }
+                }
+            });
+        }
+   } 
+});

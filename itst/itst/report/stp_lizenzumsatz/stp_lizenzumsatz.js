@@ -8,7 +8,8 @@ frappe.query_reports["STP Lizenzumsatz"] = {
             "fieldname":"item_group",
             "label": __("Item Group"),
             "fieldtype": "Link",
-            "options": "Item Group"
+            "options": "Item Group",
+            "default": "STP-Lizenzen"
         },
         {
             "fieldname":"from_date",

@@ -21,7 +21,7 @@ def execute(filters=None):
     
     # prepare data range
     first_last_day = calendar.monthrange(filters.year, filters.month)
-    from_date = datetime.datetime(filters.year, filters.month, first_last_day[0]).date()
+    from_date = datetime.datetime(filters.year, filters.month, 1).date()
     to_date = datetime.datetime(filters.year, filters.month, first_last_day[1]).date()
     ytd_from = datetime.datetime(filters.year, 1, 1).date()
     if filters.month < 4:
@@ -47,6 +47,7 @@ def execute(filters=None):
         {'fieldname': 'target', 'label': _('Target'), 'fieldtype': 'Currency', 'width': 100},
         {'fieldname': 'achievement', 'label': _('Achievement'), 'fieldtype': 'Percent', 'width': 100},
         {'fieldname': 'bonus', 'label': _('Bonus'), 'fieldtype': 'Currency', 'width': 100},
+        {'fieldname': 'details', 'label': _('Details'), 'fieldtype': 'Data', 'width': 80}
     ]
     
     data = []
@@ -80,6 +81,7 @@ def execute(filters=None):
                 break
         row['target'] = target or 1
         row['achievement'] = 100 * row['volume_q'] / (target or 1)
+        row['details'] = "..."
         if filters.month == 3 or filters.month == 6 or filters.month == 9 or filters.month == 12:
             bonus = 0
             for b in sales_partner.bonus:

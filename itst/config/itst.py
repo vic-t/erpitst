@@ -93,6 +93,20 @@ def get_data():
                        "label": _("Offene TS-Positionen"),
                        "doctype": "Timesheet",
                        "is_query_report": True
+                   },
+                   {
+                       "type": "report",
+                       "name": "Liqplan",
+                       "label": _("Liqplan"),
+                       "doctype": "Sales Order",
+                       "is_query_report": True
+                   },
+                   {
+                       "type": "report",
+                       "name": "Saldovorschau",
+                       "label": _("Saldovorschau"),
+                       "doctype": "Sales Invoice",
+                       "is_query_report": True
                    }
             ]
         },
@@ -100,6 +114,12 @@ def get_data():
             "label": _("Einstellungen"),
             "icon": "octicon octicon-repo",
             "items": [
+                   {
+                       "type": "doctype",
+                       "name": "ITST Settings",
+                       "label": _("ITST Settings"),
+                       "description": _("ITST Settings")
+                   },
                    {
                        "type": "doctype",
                        "name": "Signature",
@@ -111,6 +131,12 @@ def get_data():
                        "name": "Email Footer Temaplte",
                        "label": _("Email Footer Temaplte"),
                        "description": _("Email Footer Temaplte")
+                   },
+                   {
+                       "type": "doctype",
+                       "name": "Batch",
+                       "label": _("Batch"),
+                       "description": _("Batch")
                    }
             ]
         }
