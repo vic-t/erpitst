@@ -36,7 +36,8 @@ def get_invoiceable_timesheets(from_date, to_date, project):
             AND `tabTimesheet Detail`.`project` = "{project}"
             AND `tabTimesheet`.`docstatus` = 1
             AND `tabTimesheet Detail`.`billable` = 1
-            AND `tabSales Invoice Item`.`name` IS NULL;
+            AND `tabSales Invoice Item`.`name` IS NULL
+        ORDER BY `tabTimesheet Detail`.`from_time` ASC;
     """.format(from_date=from_date, to_date=to_date, project=project)
     
     data = frappe.db.sql(sql_query, as_dict=True)
