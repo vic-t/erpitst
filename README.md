@@ -1,6 +1,6 @@
 ## ITST
 
-ITST
+ITST GmbH
 
 #### License
 
