@@ -121,6 +121,13 @@ def get_data():
                         "label": _("Accounts Payable"),
                         "doctype": "Purchase Invoice",
                         "is_query_report": True
+                    },
+                    {
+                        "type": "report",
+                        "name": "Lagerbuch ITST",
+                        "label": _("Lagerbuch ITST"),
+                        "doctype": "Stock Ledger Entry",
+                        "is_query_report": True
                     }
             ]
         },
