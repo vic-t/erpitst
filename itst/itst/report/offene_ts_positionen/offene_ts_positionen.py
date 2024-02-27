@@ -127,7 +127,7 @@ def get_data(filters):
                 `tabTimesheet Detail`.`remarks` AS `remarks`, 
                 `tabTimesheet Detail`.`category` AS `category`, 
                 `tabProject`.`status` AS `status`,
-                `tabSales Invoice Item`.`name` AS `sales_invoice`,
+                `tabSales Invoice Item`.`parent` AS `sales_invoice`,
                 1 AS `indent`
             FROM `tabTimesheet Detail`
             LEFT JOIN `tabTimesheet` ON `tabTimesheet`.`name` = `tabTimesheet Detail`.`parent`
