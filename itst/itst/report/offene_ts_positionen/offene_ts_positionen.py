@@ -1,4 +1,4 @@
-# Copyright (c) 2022, ITST, libracore and contributors
+# Copyright (c) 2022-2024, ITST, libracore and contributors
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
@@ -96,6 +96,8 @@ def get_data(filters):
            AND `tabTimesheet Detail`.`project` LIKE "{project}"
            AND ((`tabTimesheet Detail`.`from_time` >= "{from_date}" AND `tabTimesheet Detail`.`from_time` <= "{to_date}")
             OR (`tabTimesheet Detail`.`to_time` >= "{from_date}" AND `tabTimesheet Detail`.`to_time` <= "{to_date}"))
+           AND `tabSales Invoice`.`posting_date` <= "{to_date}"
+           AND `tabSales Invoice`.`posting_date` >= "{from_date}"
            AND {customer_condition}
         GROUP BY 
             `tabTimesheet Detail`.`project`;
