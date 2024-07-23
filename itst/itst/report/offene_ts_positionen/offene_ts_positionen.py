@@ -137,6 +137,7 @@ def get_data(filters):
                 `tabTimesheet Detail`.`name` = `tabSales Invoice Item`.`ts_detail`
                 AND `tabSales Invoice Item`.`docstatus` < 2
             )
+            LEFT JOIN `tabSales Invoice` ON `tabSales Invoice`.`name` = `tabSales Invoice Item`.`parent`
             LEFT JOIN `tabProject` ON `tabProject`.name = `tabTimesheet Detail`.`project`
             LEFT JOIN `tabCustomer` ON `tabCustomer`.`name` = `tabProject`.`customer`
             WHERE 
@@ -145,6 +146,7 @@ def get_data(filters):
                AND `tabTimesheet Detail`.`project` = "{project}"
                AND ((`tabTimesheet Detail`.`from_time` >= "{from_date}" AND `tabTimesheet Detail`.`from_time` <= "{to_date}")
                 OR (`tabTimesheet Detail`.`to_time` >= "{from_date}" AND `tabTimesheet Detail`.`to_time` <= "{to_date}"))
+               AND (`tabSales Invoice`.`posting_date` IS NULL OR `tabSales Invoice`.`posting_date` >= "{to_date}")
                AND {customer_condition}
             GROUP BY `tabTimesheet Detail`.`name`
             ORDER BY `tabTimesheet Detail`.`from_time` ASC;
