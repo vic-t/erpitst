@@ -67,7 +67,7 @@ def get_data(filters):
     
     # if show_invoiced positions: = 1 no filter, otherwise only uninvoiced (or cut-off date)
     if filters.to_date:
-        customer_condition += """ AND (`tabSales Invoice`.`posting_date` IS NULL OR `tabSales Invoice`.`posting_date` >= "{to_date}") """.format(to_date=filers.to_date)
+        customer_condition += """ AND (`tabSales Invoice`.`posting_date` IS NULL OR `tabSales Invoice`.`posting_date` >= "{to_date}") """.format(to_date=filters.to_date)
     elif cint(filters.show_invoiced) == 0:
         customer_condition += """ AND `tabSales Invoice Item`.`name` IS NULL """
     
