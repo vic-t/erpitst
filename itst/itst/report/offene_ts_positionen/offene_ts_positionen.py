@@ -88,6 +88,7 @@ def get_data(filters):
             `tabTimesheet Detail`.`name` = `tabSales Invoice Item`.`ts_detail`
             AND `tabSales Invoice Item`.`docstatus` < 2
         )
+        LEFT JOIN `tabSales Invoice` IN `tabSales Invoice`.`name` = `tabSales Invoice Item`.`parent`
         LEFT JOIN `tabProject` ON `tabProject`.name = `tabTimesheet Detail`.`project`
         LEFT JOIN `tabCustomer` ON `tabCustomer`.`name` = `tabProject`.`customer`
         WHERE 
