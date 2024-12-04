@@ -20,7 +20,6 @@ def fetch_clockify_entry(entry_id):
 def convert_iso_to_erpnext_datetime(iso_datetime):
     dt = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
     erpnext_datetime = dt.strftime("%Y-%m-%d %H:%M:%S")
-    #print(f"Converted datetime: {iso_datetime} -> {erpnext_datetime}")
     return erpnext_datetime
 
 def parse_duration(duration):
@@ -33,29 +32,57 @@ def parse_duration(duration):
         hours = int(match.group(2))
     if match.group(4):  # Minutes
         minutes = int(match.group(4))
-    return hours + (minutes / 60), f"{hours}:{minutes:02}"  
+    return hours + (minutes / 60), f"{hours}:{minutes:02}"
 
 def create_timesheet_with_initial_log(company, employee, time_log_data):
     try:
+        print("Time Log Data (before insert):", time_log_data)
         timesheet = frappe.get_doc({
             "doctype": "Timesheet",
             "company": company,
             "employee": employee,
-            #"titel": "test test",
             "time_logs": [
                 {
                     "doctype": "Timesheet Detail",
                     **time_log_data,
                 }
             ],
-        })
+        })    
+        
+        print("Timesheet Data Before Insert:", timesheet.as_dict())
+
         timesheet.insert()
+        print("Timesheet Data After Insert:", timesheet.as_dict())
+
         frappe.db.commit()
+        print("Timesheet Inserted Successfully:", timesheet.name)
+
         return timesheet.name
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Create Timesheet Error")
-        #frappe.throw(f"Failed to create Timesheet: {str(e)}")
 
+def add_time_log_to_timesheet(timesheet_name, time_log_data):
+    try:
+        timesheet = frappe.get_doc("Timesheet", timesheet_name)
+
+        for log in timesheet.time_logs:
+            log.from_time = str(log.from_time)
+            log.to_time = str(log.to_time)
+        
+        timesheet.append("time_logs", {
+            #"doctype": "Timesheet Detail",
+            **time_log_data,
+        })
+        print("Timesheet Data Before Insert:", timesheet.as_dict())
+
+        timesheet.save()
+
+        print("Timesheet Data After Insert:", timesheet.as_dict())
+
+        frappe.db.commit()
+        return timesheet.name
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Add Time Log to Timesheet Error")
 
 def import_clockify_entry_to_timesheet(entry_id=None):
     try:
@@ -77,11 +104,13 @@ def import_clockify_entry_to_timesheet(entry_id=None):
             "to_time": to_time,
             "duration": duration_formatted,
             "hours": duration_hours,
-            "billing_duration": duration_formatted,
+            "project": "test",
             "billable": clockify_entry["billable"],
+            "billing_duration": duration_formatted,
+            "billing_hours": duration_hours,
             "billing_rate": billing_rate,
-            "billing_amount": 58.33,
-            "dienstleistungsartikel": "test-001",
+            "billing_amount": billing_amount,
+            "category": "test-001",
             "remarks": clockify_entry.get("description", "Default Remarks"),
         }
 
@@ -89,9 +118,16 @@ def import_clockify_entry_to_timesheet(entry_id=None):
 
         company = "ITST"
         employee = "HR-EMP-00001"
-        timesheet_name = create_timesheet_with_initial_log(company, employee, time_log_data)
+        #timesheet_name = create_timesheet_with_initial_log(company, employee, time_log_data)
+
+        timesheet_name = "TS-2024-00030"
+
+        if timesheet_name:
+            add_time_log_to_timesheet(timesheet_name, time_log_data)
+            frappe.msgprint(f"Clockify entry added to Timesheet {timesheet_name} successfully.")
+        else:
+            frappe.throw("Timesheet not found. Cannot add log.")
 
         frappe.msgprint(f"Clockify entry imported into Timesheet {timesheet_name} successfully.")
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Clockify Import Error")
-        #frappe.throw(f"Failed to import Clockify entry: {str(e)}")
