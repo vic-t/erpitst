@@ -1,6 +1,7 @@
 import frappe
 import requests
 import re
+import time
 from datetime import datetime
 
 CLOCKIFY_API_KEY = "api_key"
@@ -16,6 +17,27 @@ def fetch_clockify_entry(entry_id):
     else:
         frappe.throw(f"Failed to fetch entry: {response.status_code}, {response.text}")
 
+def fetch_clockify_project_name(project_id):
+    time.sleep(1)
+    url = f"{CLOCKIFY_BASE_URL}/workspaces/{WORKSPACE_ID}/projects/{project_id}"
+    headers = {"X-Api-Key": CLOCKIFY_API_KEY}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        project = response.json()
+        return project.get("name", "Unknown Project")
+    else:
+        frappe.throw(f"Failed to fetch project name: {response.status_code}, {response.text}")
+
+def fetch_clockify_user_name(user_id):
+    time.sleep(1)
+    url = f"{CLOCKIFY_BASE_URL}/workspaces/{WORKSPACE_ID}/member-profile/{user_id}"
+    headers = {"X-Api-Key": CLOCKIFY_API_KEY}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        user = response.json()
+        return user.get("name", "Unknown User")
+    else:
+        frappe.throw(f"Failed to fetch user name: {response.status_code}, {response.text}")
 
 def convert_iso_to_erpnext_datetime(iso_datetime):
     dt = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
@@ -34,13 +56,14 @@ def parse_duration(duration):
         minutes = int(match.group(4))
     return hours + (minutes / 60), f"{hours}:{minutes:02}"
 
-def create_timesheet_with_initial_log(company, employee, time_log_data):
+def create_timesheet(company, employee, time_log_data, unique_Timesheet_name):
     try:
         print("Time Log Data (before insert):", time_log_data)
         timesheet = frappe.get_doc({
             "doctype": "Timesheet",
             "company": company,
             "employee": employee,
+            "title": unique_Timesheet_name,
             "time_logs": [
                 {
                     "doctype": "Timesheet Detail",
@@ -70,7 +93,7 @@ def add_time_log_to_timesheet(timesheet_name, time_log_data):
             log.to_time = str(log.to_time)
         
         timesheet.append("time_logs", {
-            #"doctype": "Timesheet Detail",
+            "doctype": "Timesheet Detail",
             **time_log_data,
         })
         print("Timesheet Data Before Insert:", timesheet.as_dict())
@@ -84,6 +107,16 @@ def add_time_log_to_timesheet(timesheet_name, time_log_data):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Add Time Log to Timesheet Error")
 
+def find_or_create_timesheet(company, employee, unique_Timesheet_name):
+    """Find an existing Timesheet or create a new one."""
+    
+    timesheets = frappe.get_list(
+        "Timesheet",
+        filters={"naming_series": unique_Timesheet_name},  # Filtering by naming_series
+        fields=["name"]
+    )
+    return timesheets[0].name if timesheets else None
+
 def import_clockify_entry_to_timesheet(entry_id=None):
     try:
         clockify_entry = fetch_clockify_entry(entry_id)
@@ -91,8 +124,13 @@ def import_clockify_entry_to_timesheet(entry_id=None):
         to_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["end"])
         duration_hours, duration_formatted = parse_duration(clockify_entry["timeInterval"]["duration"])
 
-        billing_rate = clockify_entry["hourlyRate"]["amount"]
-        billing_rate /= 100
+        project_id = clockify_entry["projectId"]
+        user_id = clockify_entry["userId"]
+
+        project_name = fetch_clockify_project_name(project_id)
+        user_name = fetch_clockify_user_name(user_id)
+
+        billing_rate = clockify_entry["hourlyRate"]["amount"] / 100
         print(f"Billing rate: {billing_rate}")
 
         billing_amount = billing_rate * duration_hours
@@ -104,7 +142,7 @@ def import_clockify_entry_to_timesheet(entry_id=None):
             "to_time": to_time,
             "duration": duration_formatted,
             "hours": duration_hours,
-            "project": "test",
+            "project": project_name,
             "billable": clockify_entry["billable"],
             "billing_duration": duration_formatted,
             "billing_hours": duration_hours,
@@ -118,16 +156,22 @@ def import_clockify_entry_to_timesheet(entry_id=None):
 
         company = "ITST"
         employee = "HR-EMP-00001"
-        #timesheet_name = create_timesheet_with_initial_log(company, employee, time_log_data)
 
-        timesheet_name = "TS-2024-00030"
+        print(f"Projekt name: {project_name}")
+        print(f"User name: {user_name}")
+
+        unique_Timesheet_name = f"{user_name}_{project_name}"
+
+        #timesheet_name = "TS-2024-00030"
+
+        timesheet_name = find_or_create_timesheet(company, employee, unique_Timesheet_name)
 
         if timesheet_name:
             add_time_log_to_timesheet(timesheet_name, time_log_data)
             frappe.msgprint(f"Clockify entry added to Timesheet {timesheet_name} successfully.")
         else:
-            frappe.throw("Timesheet not found. Cannot add log.")
+            new_timesheet_name = create_timesheet(company, employee, time_log_data, unique_Timesheet_name)
+            frappe.msgprint(f"New Timesheet {new_timesheet_name} created successfully.")
 
-        frappe.msgprint(f"Clockify entry imported into Timesheet {timesheet_name} successfully.")
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Clockify Import Error")
