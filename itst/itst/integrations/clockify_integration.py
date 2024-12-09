@@ -2,10 +2,15 @@ import frappe
 import requests
 import re
 import time
+import os
+from dotenv import load_dotenv
 from datetime import datetime
 
-CLOCKIFY_API_KEY = "api_key"
-WORKSPACE_ID = "workspace_id"
+
+load_dotenv()
+
+CLOCKIFY_API_KEY = os.getenv("CLOCKIFY_API_KEY")
+WORKSPACE_ID = os.getenv("CLOCKIFY_WORKSPACE_ID")
 CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1"
 
 def fetch_clockify_entry(entry_id):
