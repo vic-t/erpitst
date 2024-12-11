@@ -44,7 +44,8 @@ doctype_js = {
     "Expense Claim" : "public/js/expense_claim.js",
     "Lead" : "public/js/lead.js",
     "Terms and Conditions" : "public/js/terms_and_conditions.js",
-    "Purchase Invoice" : "public/js/purchase_invoice.js"
+    "Purchase Invoice" : "public/js/purchase_invoice.js",
+    "Contact" : "public/js/contact.js"
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
