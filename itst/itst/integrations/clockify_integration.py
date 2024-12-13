@@ -12,37 +12,41 @@ load_dotenv()
 CLOCKIFY_API_KEY = os.getenv("CLOCKIFY_API_KEY")
 WORKSPACE_ID = os.getenv("CLOCKIFY_WORKSPACE_ID")
 CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1"
+USER_ID = "6745c94707ed306748cb1bb5"
 
-def fetch_clockify_entry(entry_id):
-    url = f"{CLOCKIFY_BASE_URL}/workspaces/{WORKSPACE_ID}/time-entries/{entry_id}"
-    headers = {"X-Api-Key": CLOCKIFY_API_KEY}
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        frappe.log_error(f"Failed to fetch entry: {response.status_code}, {response.text}")
 
-def fetch_clockify_project_name(project_id):
-    time.sleep(1)
-    url = f"{CLOCKIFY_BASE_URL}/workspaces/{WORKSPACE_ID}/projects/{project_id}"
+def fetch_all_clockify_entries():
+    url = f"{CLOCKIFY_BASE_URL}/workspaces/{WORKSPACE_ID}/user/{USER_ID}/time-entries"
     headers = {"X-Api-Key": CLOCKIFY_API_KEY}
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        project = response.json()
-        return project.get("name", "Unknown Project")
-    else:
-        frappe.log_error(f"Failed to fetch project name: {response.status_code}, {response.text}")
 
-def fetch_clockify_user_name(user_id):
-    time.sleep(1)
-    url = f"{CLOCKIFY_BASE_URL}/workspaces/{WORKSPACE_ID}/member-profile/{user_id}"
-    headers = {"X-Api-Key": CLOCKIFY_API_KEY}
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        user = response.json()
-        return user.get("name", "Unknown User")
-    else:
-        frappe.log_error(f"Failed to fetch user name: {response.status_code}, {response.text}")
+    start = "2024-12-13T00:00:00Z"
+    end = "2024-12-14T00:00:00Z"
+
+    params = {
+        "start": start,  
+        "end": end,      
+        "hydrated": "true", 
+    }
+
+    all_entries = []
+    while True:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code != 200:
+            frappe.log_error(f"Failed to fetch entries: {response.status_code}, {response.text}")
+            break
+
+        entries = response.json()
+
+        if not entries:
+            # no more entries
+            print(f"all entries {all_entries}")
+            break
+
+        all_entries.extend(entries)
+
+        params["page"] += 1
+
+    return all_entries
 
 def convert_iso_to_erpnext_datetime(iso_datetime):
     dt = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
@@ -112,8 +116,7 @@ def add_time_log_to_timesheet(timesheet_name, time_log_data):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Add Time Log to Timesheet Error")
 
-def find_or_create_timesheet(company, employee, unique_Timesheet_name):
-    """Find an existing Timesheet or create a new one."""
+def find_or_create_timesheet(unique_Timesheet_name):
     print(f"Timesheet name: {unique_Timesheet_name}")
     timesheets = frappe.get_list(
         "Timesheet",
@@ -126,24 +129,19 @@ def find_or_create_timesheet(company, employee, unique_Timesheet_name):
     print(f"Timesheet found: {timesheets}")
     return timesheets[0].name if timesheets else None
 
-def import_clockify_entry_to_timesheet(entry_id=None):
+def process_single_clockify_entry(clockify_entry):
     try:
-        clockify_entry = fetch_clockify_entry(entry_id)
         from_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["start"])
         to_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["end"])
+
         duration_hours, duration_formatted = parse_duration(clockify_entry["timeInterval"]["duration"])
 
-        project_id = clockify_entry["projectId"]
-        user_id = clockify_entry["userId"]
+        project_name = clockify_entry["project"]["name"]
+        user_name = clockify_entry["user"]["name"]
 
-        project_name = fetch_clockify_project_name(project_id)
-        user_name = fetch_clockify_user_name(user_id)
-
+        # Billing-Infos aus dem Eintrag holen
         billing_rate = clockify_entry["hourlyRate"]["amount"] / 100
-        print(f"Billing rate: {billing_rate}")
-
         billing_amount = billing_rate * duration_hours
-        print(f"Billing amount: {billing_amount}")
 
         time_log_data = {
             "activity_type": "Planung",
@@ -161,32 +159,38 @@ def import_clockify_entry_to_timesheet(entry_id=None):
             "remarks": clockify_entry.get("description", "Default Remarks"),
         }
 
-        print("Time Log Data:", time_log_data)
-
         company = "ITST"
         employee = "HR-EMP-00001"
 
-        print(f"Projekt name: {project_name}")
-        print(f"User name: {user_name}")
-
         unique_Timesheet_name = f"{user_name}_{project_name}"
 
-        #timesheet_name = "TS-2024-00030"
-
-        timesheet_name = find_or_create_timesheet(company, employee, unique_Timesheet_name)
+        timesheet_name = find_or_create_timesheet(unique_Timesheet_name)
 
         if timesheet_name:
             add_time_log_to_timesheet(timesheet_name, time_log_data)
-            frappe.msgprint(f"Clockify entry added to Timesheet {timesheet_name} successfully.")
         else:
             new_timesheet_name = create_timesheet(company, employee, time_log_data, unique_Timesheet_name)
-            frappe.msgprint(f"New Timesheet {new_timesheet_name} created successfully.")
+            timesheet_name = new_timesheet_name
+
+        return timesheet_name
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Clockify Import Error")
-"""
-if __name__ == "__main__":
-    import_clockify_entry_to_timesheet(entry_id='6752ce89f3915f721bd37ee1')
 
-"""
+def import_clockify_entries_to_timesheet():
+    try:
+        all_entries = fetch_all_clockify_entries()
 
+        if not all_entries:
+            frappe.msgprint("No new entries found.")
+            return
+
+        imported_count = 0
+        for entry in all_entries:
+            process_single_clockify_entry(entry)
+            imported_count += 1
+
+        frappe.msgprint(f"{imported_count} entries imported successfully.")
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Clockify Multi Import Error")
+        frappe.throw("Error importing multiple Clockify entries. Check the logs for details.")
