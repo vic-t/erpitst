@@ -15,17 +15,19 @@ CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1"
 USER_ID = os.getenv("USER_ID")
 
 
-def fetch_all_clockify_entries(workspace_id, clockify_user_id):
-    url = f"{CLOCKIFY_BASE_URL}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
+def fetch_all_clockify_entries():
+    url = f"{CLOCKIFY_BASE_URL}/workspaces/{WORKSPACE_ID}/user/{USER_ID}/time-entries"
     headers = {"X-Api-Key": CLOCKIFY_API_KEY}
 
-    start = "2024-12-13T00:00:00Z"
-    end = "2024-12-14T00:00:00Z"
+    start = "2024-12-16T00:00:00Z"
+    end = "2024-12-17T00:00:00Z"
 
     params = {
         "start": start,  
         "end": end,      
         "hydrated": "true", 
+        "page-size": 50,
+        "page": 1 
     }
 
     all_entries = []
@@ -176,9 +178,9 @@ def process_single_clockify_entry(clockify_entry):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Clockify Import Error")
 
-def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id):
+def import_clockify_entries_to_timesheet():
     try:
-        all_entries = fetch_all_clockify_entries(workspace_id, clockify_user_id)
+        all_entries = fetch_all_clockify_entries()
 
         if not all_entries:
             frappe.msgprint("No new entries found.")
@@ -189,6 +191,7 @@ def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id):
             process_single_clockify_entry(entry)
             imported_count += 1
 
+        frappe.msgprint(f"{imported_count} entries imported successfully.")
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Clockify Multi Import Error")
 
@@ -198,9 +201,9 @@ def run_clockify_import():
     settings = frappe.get_doc("Clockify Import Settings")
     workspace_id = settings.workspace_id
 
-    for mapping in settings.user_mappings:
+    for mapping in settings.user_mapping:
         clockify_user_id = mapping.clockify_user_id
     print("clockify user id:", clockify_user_id)
     print(f"workspace {workspace_id}")
 
-    import_clockify_entries_to_timesheet(workspace_id, clockify_user_id)
+    import_clockify_entries_to_timesheet()

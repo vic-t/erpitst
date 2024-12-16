@@ -6,10 +6,7 @@ frappe.ui.form.on('Clockify Import Settings', {
 		if (!frm.is_new()) {
 			frm.add_custom_button(__('Import now'), function() {
 				frappe.call({
-					method: "itst.itst.integrations.clockify_integration.test_connection",
-					callback: function(response) {
-                        console.log("Response from server:", response.message);
-                    }
+					method: "itst.itst.integrations.clockify_integration.run_clockify_import"
 				});
 			});
 		}
