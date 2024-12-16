@@ -1,0 +1,57 @@
+{
+ "creation": "2024-12-16 10:32:50.837519",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "workspace_id",
+  "import_start",
+  "import_ende",
+  "user_mapping"
+ ],
+ "fields": [
+  {
+   "fieldname": "workspace_id",
+   "fieldtype": "Data",
+   "label": "Workspace Id"
+  },
+  {
+   "fieldname": "import_start",
+   "fieldtype": "Datetime",
+   "label": "Import Start"
+  },
+  {
+   "fieldname": "import_ende",
+   "fieldtype": "Datetime",
+   "label": "Import Ende"
+  },
+  {
+   "fieldname": "user_mapping",
+   "fieldtype": "Table",
+   "label": "Users",
+   "options": "Clockify User Mapping"
+  }
+ ],
+ "issingle": 1,
+ "modified": "2024-12-16 10:35:07.248267",
+ "modified_by": "Administrator",
+ "module": "ITST",
+ "name": "Clockify Import Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
