@@ -15,8 +15,8 @@ CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1"
 USER_ID = os.getenv("USER_ID")
 
 
-def fetch_all_clockify_entries():
-    url = f"{CLOCKIFY_BASE_URL}/workspaces/{WORKSPACE_ID}/user/{USER_ID}/time-entries"
+def fetch_all_clockify_entries(workspace_id, clockify_user_id):
+    url = f"{CLOCKIFY_BASE_URL}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": CLOCKIFY_API_KEY}
 
     start = "2024-12-16T00:00:00Z"
@@ -131,7 +131,7 @@ def find_or_create_timesheet(unique_Timesheet_name):
     print(f"Timesheet found: {timesheets}")
     return timesheets[0].name if timesheets else None
 
-def process_single_clockify_entry(clockify_entry):
+def process_single_clockify_entry(clockify_entry, employee):
     try:
         from_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["start"])
         to_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["end"])
@@ -161,7 +161,6 @@ def process_single_clockify_entry(clockify_entry):
         }
 
         company = "ITST"
-        employee = "HR-EMP-00001"
 
         unique_Timesheet_name = f"{user_name}_{project_name}"
 
@@ -178,9 +177,9 @@ def process_single_clockify_entry(clockify_entry):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Clockify Import Error")
 
-def import_clockify_entries_to_timesheet():
+def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, employee):
     try:
-        all_entries = fetch_all_clockify_entries()
+        all_entries = fetch_all_clockify_entries(workspace_id, clockify_user_id)
 
         if not all_entries:
             frappe.msgprint("No new entries found.")
@@ -188,7 +187,7 @@ def import_clockify_entries_to_timesheet():
 
         imported_count = 0
         for entry in all_entries:
-            process_single_clockify_entry(entry)
+            process_single_clockify_entry(entry, employee)
             imported_count += 1
 
         frappe.msgprint(f"{imported_count} entries imported successfully.")
@@ -197,13 +196,20 @@ def import_clockify_entries_to_timesheet():
 
 
 @frappe.whitelist()
-def run_clockify_import():
+def run_clockify_import(user_mapping_name):
     settings = frappe.get_doc("Clockify Import Settings")
     workspace_id = settings.workspace_id
 
-    for mapping in settings.user_mapping:
-        clockify_user_id = mapping.clockify_user_id
-    print("clockify user id:", clockify_user_id)
-    print(f"workspace {workspace_id}")
+    selected_mapping = None
+    for m in settings.user_mapping:
+        if m.erpnext_employee == user_mapping_name:
+            selected_mapping = m
+            break
+    
+    if not selected_mapping:
+        frappe.throw("Selected user mapping not found.")
+    
+    clockify_user_id = selected_mapping.clockify_user_id
+    erpnext_employee = selected_mapping.erpnext_employee
 
-    import_clockify_entries_to_timesheet()
+    import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee)
