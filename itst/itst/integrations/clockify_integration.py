@@ -14,13 +14,12 @@ WORKSPACE_ID = os.getenv("CLOCKIFY_WORKSPACE_ID")
 CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1"
 USER_ID = os.getenv("USER_ID")
 
-
 def fetch_all_clockify_entries(workspace_id, clockify_user_id):
     url = f"{CLOCKIFY_BASE_URL}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": CLOCKIFY_API_KEY}
 
-    start = "2024-12-16T00:00:00Z"
-    end = "2024-12-17T00:00:00Z"
+    start = "2024-12-18T00:00:00Z"
+    end = "2024-12-19T00:00:00Z"
 
     params = {
         "start": start,  
@@ -82,12 +81,9 @@ def create_timesheet(company, employee, time_log_data, unique_Timesheet_name):
                 }
             ],
         })    
-        
         print("Timesheet Data Before Insert:", timesheet.as_dict())
-
         timesheet.insert()
         print("Timesheet Data After Insert:", timesheet.as_dict())
-
         frappe.db.commit()
         print("Timesheet Inserted Successfully:", timesheet.name)
 
@@ -177,7 +173,7 @@ def process_single_clockify_entry(clockify_entry, employee):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Clockify Import Error")
 
-def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, employee):
+def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, employee):    
     try:
         all_entries = fetch_all_clockify_entries(workspace_id, clockify_user_id)
 
@@ -187,8 +183,9 @@ def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, employe
 
         imported_count = 0
         for entry in all_entries:
-            process_single_clockify_entry(entry, employee)
-            imported_count += 1
+            if project_validation(entry["project"]["name"]):
+                process_single_clockify_entry(entry, employee)
+                imported_count += 1
 
         frappe.msgprint(f"{imported_count} entries imported successfully.")
     except Exception as e:
@@ -212,4 +209,13 @@ def run_clockify_import(user_mapping_name):
     clockify_user_id = selected_mapping.clockify_user_id
     erpnext_employee = selected_mapping.erpnext_employee
 
-    import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee)
+    import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee) 
+
+def project_validation(project_name):
+    if project_name and not frappe.db.exists("Project", {"project_name": project_name}):
+        frappe.msgprint(
+            msg=f"Project {project_name} does not exist.",
+            title="Error",
+            indicator="red"
+        )
+        frappe.throw(f"Project '{project_name}' does not exist. Please correct the name.")
