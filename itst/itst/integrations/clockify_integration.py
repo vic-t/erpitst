@@ -165,7 +165,10 @@ def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, employe
     errors = []
     for entry in all_entries:
         try:
-            result = process_single_clockify_entry(entry, employee)
+
+            result = None
+            if project_validation(entry["project"]["name"]):
+                result = process_single_clockify_entry(entry, employee)
             if result is not None:
                 imported_count += 1
         except Exception as e:
