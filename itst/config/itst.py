@@ -158,6 +158,12 @@ def get_data():
                        "name": "Batch",
                        "label": _("Batch"),
                        "description": _("Batch")
+                   },
+                   {
+                       "type":"doctype",
+                       "name":"Clockify Import Settings",
+                       "label": _("Clockify Import Settings"),
+                       "description":_("Clockify Import Settings")
                    }
             ]
         }

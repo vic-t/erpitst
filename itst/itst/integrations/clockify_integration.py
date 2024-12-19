@@ -1,10 +1,9 @@
 import frappe
 import requests
 import re
-import time
 import os
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime,timezone,timedelta
 
 
 load_dotenv()
@@ -18,8 +17,8 @@ def fetch_all_clockify_entries(workspace_id, clockify_user_id):
     url = f"{CLOCKIFY_BASE_URL}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": CLOCKIFY_API_KEY}
 
-    start = "2024-12-17T00:00:00Z"
-    end = "2024-12-18T00:00:00Z"
+    start = "2024-12-19T00:00:00Z"
+    end = "2024-12-20T00:00:00Z"
 
     params = {
         "start": start,  
@@ -51,6 +50,7 @@ def fetch_all_clockify_entries(workspace_id, clockify_user_id):
 
 def convert_iso_to_erpnext_datetime(iso_datetime):
     dt = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
+    dt = dt.astimezone(timezone(timedelta(hours=1)))
     erpnext_datetime = dt.strftime("%Y-%m-%d %H:%M:%S")
     return erpnext_datetime
 
@@ -100,7 +100,6 @@ def add_time_log_to_timesheet(timesheet_name, time_log_data):
     frappe.db.commit()
     return timesheet.name
 
-
 def find_or_create_timesheet(unique_Timesheet_name):
     print(f"Timesheet name: {unique_Timesheet_name}")
     timesheets = frappe.get_list(
@@ -130,7 +129,7 @@ def process_single_clockify_entry(clockify_entry, employee):
 
     company = "ITST"
     time_log_data = {
-        "activity_type": "Planung",
+        "activity_type": "Planning",
         "from_time": from_time,
         "to_time": to_time,
         "duration": duration_formatted,
@@ -141,7 +140,7 @@ def process_single_clockify_entry(clockify_entry, employee):
         "billing_hours": duration_hours,
         "billing_rate": billing_rate,
         "billing_amount": billing_amount,
-        "category": "test-001",
+        "category": "Elia ",
         "remarks": clockify_entry.get("description", "Default Remarks"),
     }
 
@@ -212,3 +211,4 @@ def project_validation(project_name):
             indicator="red"
         )
         frappe.throw(f"Project '{project_name}' does not exist. Please correct the name.")
+    return True
