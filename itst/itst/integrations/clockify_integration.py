@@ -3,7 +3,7 @@ import requests
 import re
 import os
 from dotenv import load_dotenv
-from datetime import datetime,timezone,timedelta
+from datetime import datetime, timezone, timedelta
 
 
 load_dotenv()
@@ -13,6 +13,7 @@ CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1"
 
 
 def fetch_all_clockify_entries(workspace_id, clockify_user_id):
+    get_week_before = get_import_time()
     url = f"{CLOCKIFY_BASE_URL}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": CLOCKIFY_API_KEY}
 
@@ -20,8 +21,9 @@ def fetch_all_clockify_entries(workspace_id, clockify_user_id):
     end = "2024-12-20T00:00:00Z"
 
     params = {
-        "start": start,  
-        "end": end,      
+        "get-week-before": get_week_before,
+        #"start": start,  
+        #"end": end,      
         "hydrated": "true",
         "page": 1,
         "page-size": 5000
@@ -227,3 +229,15 @@ def update_clockify_entry(workspace_id, entry):
     response = requests.put(url, headers=headers, json=data)
     if response.status_code != 200:
         frappe.log_error(f"Clockify-Eintrag {entry['id']} konnte nach dem Import nicht aktualisiert werden: {response.status_code}, {response.text}“, “Clockify Update Fehler")
+
+
+def get_import_time():
+    today = datetime.utcnow().date()
+
+    weekday = today.weekday()
+
+    monday = today - timedelta(days=weekday)
+
+    get_week_before = f"{monday.isoformat()}T00:00:00Z"
+
+    return get_week_before
