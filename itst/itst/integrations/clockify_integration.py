@@ -17,13 +17,13 @@ def fetch_all_clockify_entries(workspace_id, clockify_user_id):
     url = f"{CLOCKIFY_BASE_URL}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": CLOCKIFY_API_KEY}
 
-    start = "2024-12-19T00:00:00Z"
-    end = "2024-12-20T00:00:00Z"
+    start = "2024-12-23T14:02:00Z"
+    end = "2024-12-24T00:00:00Z"
 
     params = {
-        "get-week-before": get_week_before,
-        #"start": start,  
-        #"end": end,      
+        #"get-week-before": get_week_before,
+        "start": start,  
+        "end": end,      
         "hydrated": "true",
         "page": 1,
         "page-size": 5000
@@ -118,7 +118,7 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
 
     company = "ITST"
     time_log_data = {
-        "activity_type": "Planung",
+        "activity_type": "Research",
         "from_time": from_time,
         "to_time": to_time,
         "duration": duration_formatted,
@@ -129,7 +129,7 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
         "billing_hours": duration_hours,
         "billing_rate": billing_rate,
         "billing_amount": billing_amount,
-        "category": "test-001 ",
+        "category": "Elia",
         "remarks": clockify_entry.get("description", "Default Remarks"),
         "clockify_entry_id": entry_id
     }
@@ -145,13 +145,19 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
 
     return timesheet_name
 
+def create_link(url,text):
+    return f"""
+    <a href="{url}"
+    target="_blank" 
+    style="color: #007bff; text-decoration: underline; font-weight: bold;">
+    {text}
+    </a>
+"""
 def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name):
     entries = fetch_all_clockify_entries(workspace_id, clockify_user_id)
-
     if not entries:
         frappe.msgprint("Keine Einträge gefunden.")
         return
-    
     missing_projects = set()
     imported_count = 0
     error_count = 0
@@ -162,7 +168,8 @@ def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext
             if not project_validation(project_name):
                 if project_name not in missing_projects:
                     missing_projects.add(project_name)
-                    frappe.throw(f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
+                    link_create_project = create_link("http://erp.itst.ch.localhost:8000/desk#Form/Project/New%20Project%201", "Neues Projekt erstellen")
+                    frappe.throw(f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.{link_create_project}") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
                 else:
                     raise Exception(f"Projekt '{project_name}' fehlt weiterhin.")
             
@@ -171,18 +178,17 @@ def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext
             if result is not None:
                 imported_count += 1
         except Exception as e:
-
             frappe.log_error(frappe.get_traceback(), f"Fehler bei der Verarbeitung des Clockify-Eintrags. {entry.get('id')}") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
             error_count += 1
-
             errors.append(f"Eintrag {entry.get('id')}: {str(e)}")
 
     frappe.db.commit() 
-    
     if error_count > 0:
-        frappe.throw(f"{imported_count} Einträge erfolgreich importiert, aber {error_count} Einträge sind fehlgeschlagen. Siehe Error log für Details.")
+        link_error_log = create_link("http://erp.itst.ch.localhost:8000/desk#List/Error%20Log/List", "Error log")
+        frappe.throw(f"{imported_count} Einträge erfolgreich importiert, aber {error_count} Einträge sind fehlgeschlagen. Siehe {link_error_log} für Details.")
     else:
-        frappe.msgprint(f"{imported_count} Einträge erfolgreich importiert.")
+        link_timesheet = create_link("http://erp.itst.ch.localhost:8000/desk#List/Timesheet/List", "Timesheet")
+        frappe.msgprint(f"{imported_count} Einträge erfolgreich importiert. Öffne {link_timesheet}")
 
 @frappe.whitelist()
 def run_clockify_import(user_mapping_name):
@@ -211,7 +217,7 @@ def project_validation(project_name):
 
 def duplicate_imports_validation(entry_id):
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
-        frappe.throw(f"Eintrag \"{entry_id}\" wurden bereits importiert") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
+        frappe.throw(f"Eintrag \"{entry_id}\" wurde bereits importiert") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
 
 
 def update_clockify_entry(workspace_id, entry):
@@ -223,7 +229,7 @@ def update_clockify_entry(workspace_id, entry):
         "end": entry["timeInterval"]["end"],
         "projectId": entry["projectId"],
         "start": entry["timeInterval"]["start"],
-        "tagIds": ["675c4ba16f79f63af4d20203"],
+        "tagIds": ["67691ff94d5942687d99c4ea"],
     }
 
     response = requests.put(url, headers=headers, json=data)
