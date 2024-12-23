@@ -5,7 +5,6 @@ from datetime import datetime, timezone, timedelta
 
 
 def fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url):
-
     get_week_before = get_import_time()
     url = f"{clockify_base_url}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": clockify_api_key}
@@ -87,7 +86,7 @@ def find_timesheet(unique_Timesheet_name):
     timesheets = frappe.get_list(
         "Timesheet",
         filters={
-            "title": timesheet_title ,
+            "title": unique_Timesheet_name ,
             "status": "Draft"
             },  # Filtering by title and Draft documents
         fields=["name"]
@@ -95,10 +94,7 @@ def find_timesheet(unique_Timesheet_name):
     return timesheets[0].name if timesheets else None
 
 
-def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid):
-
-    #frappe.db.savepoint("save_point")
-
+def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid, clockify_api_key, clockify_base_url):
     from_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["start"])
     to_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["end"])
 
@@ -137,8 +133,12 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
     if timesheet_name:
         add_detail_to_timesheet (timesheet_name, timesheet_detail_data)
     else:
-        new_timesheet_name = create_erpnext_timesheet(company, erpnext_employee_id, timesheet_detail_data, timesheet_title )
+        new_timesheet_name = create_erpnext_timesheet(company, erpnext_employee_id, timesheet_detail_data, unique_Timesheet_name )
         timesheet_name = new_timesheet_name
+
+
+    workspace_id = clockify_entry["workspaceId"] 
+    update_clockify_entry(workspace_id, clockify_entry, clockify_tagsid, clockify_api_key, clockify_base_url)
 
     return timesheet_name
 
@@ -172,8 +172,9 @@ def import_clockify_entries (workspace_id, clockify_user_id, erpnext_employee_id
                 else:
                     raise Exception(f"Projekt '{project_name}' fehlt weiterhin.")
             
-            check_for_duplicate_import(entry["id"])
-            result = process_clockify_entry_to_erpnext(entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid, clockify_api_key, clockify_base_url)
+
+            duplicate_imports_validation(entry["id"])
+            result = process_single_clockify_entry(entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid, clockify_api_key, clockify_base_url)
             if result is not None:
                 imported_entries_count += 1
         except Exception as e:
@@ -218,7 +219,7 @@ def validate_project_existence (project_name):
         return True
     return False 
 
-def check_for_duplicate_import(entry_id):
+def duplicate_imports_validation(entry_id):
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
         frappe.throw(f"Der Eintrag mit der ID \"{entry_id}\" wurde bereits importiert. Doppelte Importe sind nicht erlaubt. Überprüfen sie die vorhandenen Einträge im Timesheet.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
 
@@ -238,7 +239,7 @@ def update_clockify_entry(workspace_id, entry, clockify_tagsid, clockify_api_key
     if response.status_code != 200:
         frappe.log_error(f"Clockify-Eintrag {entry['id']} konnte nach dem Import nicht aktualisiert werden: {response.status_code}, {response.text}“, “Clockify Update Fehler")
         frappe.throw(f"Clockify-Eintrag {entry['id']} konnte nach dem Import nicht aktualisiert werden")
-        #frappe.db.rollback(save_point="save_point")
+
 
 def get_import_time():
     today = datetime.utcnow().date()

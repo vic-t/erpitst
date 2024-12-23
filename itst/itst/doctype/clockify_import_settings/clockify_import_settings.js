@@ -10,7 +10,7 @@ frappe.ui.form.on('Clockify Import Settings', {
                 });
 
 				if (user_options.length === 0) {
-                    frappe.msgprint("No user mappings found.");
+                    frappe.msgprint("Befülle zuerst den Table \"Users\" bevor du mit dem Import weitergehst.");
                     return;
                 }
 
