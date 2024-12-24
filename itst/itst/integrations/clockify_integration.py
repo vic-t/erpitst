@@ -21,7 +21,7 @@ def fetch_all_clockify_entries(workspace_id, clockify_user_id, clockify_api_key,
         entries = response.json()
         return entries
     else:
-        frappe.log_error(f"Fehler beim Abrufen der Einträge: {response.status_code}, {response.text}")
+        frappe.log_error(f"Fehler beim Abrufen der Einträge: {response.status_code}, {response.text}. Bitte überprüfen Sie Ihre API-Schlüssel und die Anfrageparameter.")
         frappe.throw("Fehler beim Abrufen der Einträge.")
 
 def convert_iso_to_erpnext_datetime(iso_datetime):
@@ -36,7 +36,7 @@ def parse_duration(duration):
     minutes = 0
     match = re.match(r"PT((\d+)H)?((\d+)M)?", duration)
     if not match:
-        frappe.throw(f"Ungültiges Dauerformat: {duration}")
+        frappe.throw(f"Das Format der angegebenen Dauer ist ungültig: {duration}.Bitte stellen Sie sicher, dass die Dauer im ISO 8601-Format (z. B. 'PT1H30M') angegeben ist.")
     if match.group(2):  # Hours
         hours = int(match.group(2))
     if match.group(4):  # Minutes
@@ -171,10 +171,10 @@ def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext
     frappe.db.commit() 
     if error_count > 0:
         link_error_log = create_link("http://erp.itst.ch.localhost:8000/desk#List/Error%20Log/List", "Error log")
-        frappe.throw(f"{imported_count} Einträge erfolgreich importiert, aber {error_count} Einträge sind fehlgeschlagen. Siehe {link_error_log} für Details.")
+        frappe.throw(f"Der Importprozess wurde abgeschlossen: {imported_count} Einträge wurden erfolgreich importiert. Allerdings {error_count} Einträge sind fehlgeschlagen. Bitte überprufen Sie die Fehlerdetails unter {link_error_log}.")
     else:
         link_timesheet = create_link("http://erp.itst.ch.localhost:8000/desk#List/Timesheet/List", "Timesheet")
-        frappe.msgprint(f"{imported_count} Einträge erfolgreich importiert. Öffne {link_timesheet}")
+        frappe.msgprint(f"Der Importprozess wurde erfolgreich abgeschlossen: Ingesamt wurden {imported_count} Einträge erfolgreich importiert. Sie können die importierten Daten jetzt im Timesheet-Bereich einsehen, indem Sie den folgenden Link verwenden {link_timesheet}.")
 
 @frappe.whitelist()
 def run_clockify_import(user_mapping_name):
@@ -206,7 +206,7 @@ def project_validation(project_name):
 
 def duplicate_imports_validation(entry_id):
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
-        frappe.throw(f"Eintrag \"{entry_id}\" wurde bereits importiert") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
+        frappe.throw(f"Der Eintrag mit der ID \"{entry_id}\" wurde bereits importiert. Doppelte Importe sind nicht erlaubt. Überprüfen sie die vorhandenen Einträge im Timesheet.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
 
 
 def update_clockify_entry(workspace_id, entry, clockify_tagsid, clockify_api_key, clockify_base_url):
@@ -223,8 +223,8 @@ def update_clockify_entry(workspace_id, entry, clockify_tagsid, clockify_api_key
 
     response = requests.put(url, headers=headers, json=data)
     if response.status_code != 200:
-        frappe.log_error(f"Clockify-Eintrag {entry['id']} konnte nach dem Import nicht aktualisiert werden: {response.status_code}, {response.text}", "Clockify Update Fehler")
-        frappe.throw(f"Clockify-Eintrag {entry['id']} konnte nach dem Import nicht aktualisiert werden")
+        frappe.log_error(f"Fehler beim Aktualisieren des Clockify-Eintrags nach dem Import: Die Aktualisierung des Eintrags mit der ID {entry['id']} ist fehlgeschlagen. HTTP-Statuscode: {response.status_code}, Serverantwort: {response.text}. Bitte überprüfen Sie die API-Schlüssel, den Eintrag oder die Verbindung zu Clockify.", "Clockify Update Fehler")
+        frappe.throw(f" Der Clockify-Eintrag mit der ID {entry['id']} konnte nach dem Import nicht aktualisiert werden. Dies könnte auf einen API-Fehler oder ein Problem mit der Verbindung zu Clockify hinweisen. Bitte wenden Sie sich an den Administrator, um den Fehler zu beheben.")
 
 
 def get_import_time():
