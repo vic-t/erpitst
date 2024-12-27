@@ -4,16 +4,21 @@ import re
 from datetime import datetime, timezone, timedelta
 
 
-def fetch_all_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url):
+def fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url):
     get_week_before = get_import_time()
     url = f"{clockify_base_url}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": clockify_api_key}
 
+    start = datetime.utcnow().strftime("%Y-%m-%dT00:00:00Z")
+    end = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%dT00:00:00Z")
+    
     params = {
-        "get-week-before": get_week_before,   
+        #"get-week-before": get_week_before,   
         "hydrated": "true",
         "page": 1,
-        "page-size": 5000
+        "page-size": 5000,
+        "start":start,
+        "end":end
     }
 
     response = requests.get(url, headers=headers, params=params)
@@ -44,7 +49,7 @@ def parse_duration(duration):
     return hours + (minutes / 60), f"{hours}:{minutes:02}"
 
 
-def create_timesheet(company, erpnext_employee_id, time_log_data, unique_Timesheet_name):
+def create_erpnext_timesheet(company, erpnext_employee_id, time_log_data, unique_Timesheet_name):
     timesheet = frappe.get_doc({
         "doctype": "Timesheet",
         "company": company,
@@ -61,7 +66,7 @@ def create_timesheet(company, erpnext_employee_id, time_log_data, unique_Timeshe
     #frappe.db.commit()
     return timesheet.name
 
-def add_time_log_to_timesheet(timesheet_name, time_log_data):
+def add_detail_to_timesheet (timesheet_name, time_log_data):
     timesheet = frappe.get_doc("Timesheet", timesheet_name)
 
     for log in timesheet.time_logs:
@@ -87,7 +92,7 @@ def find_timesheet(unique_Timesheet_name):
     )
     return timesheets[0].name if timesheets else None
 
-def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid, clockify_api_key, clockify_base_url):
+def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid, clockify_api_key, clockify_base_url):
     from_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["start"])
     to_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["end"])
 
@@ -124,14 +129,14 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
     update_clockify_entry(workspace_id, clockify_entry, clockify_tagsid, clockify_api_key, clockify_base_url)
 
     if timesheet_name:
-        add_time_log_to_timesheet(timesheet_name, time_log_data)
+        add_detail_to_timesheet (timesheet_name, time_log_data)
     else:
-        new_timesheet_name = create_timesheet(company, erpnext_employee_id, time_log_data, unique_Timesheet_name)
+        new_timesheet_name = create_erpnext_timesheet(company, erpnext_employee_id, time_log_data, unique_Timesheet_name)
         timesheet_name = new_timesheet_name
 
     return timesheet_name
 
-def create_link(url,text):
+def build_html_link(url,text):
     return f"""
     <a href="{url}"
     target="_blank" 
@@ -139,8 +144,8 @@ def create_link(url,text):
     {text}
     </a>
 """
-def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name, clockify_api_key, clockify_base_url, clockify_tagsid):
-    entries = fetch_all_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url)
+def import_clockify_entries (workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name, clockify_api_key, clockify_base_url, clockify_tagsid):
+    entries = fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url)
     if not entries:
         frappe.msgprint("Keine Einträge gefunden.")
         return
@@ -151,16 +156,16 @@ def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext
     for entry in entries:
         project_name = entry["project"]["name"]
         try:
-            if not project_validation(project_name):
+            if not validate_project_existence (project_name):
                 if project_name not in missing_projects:
                     missing_projects.add(project_name)
-                    link_create_project = create_link("http://erp.itst.ch.localhost:8000/desk#Form/Project/New%20Project%201", "Neues Projekt erstellen")
+                    link_create_project = build_html_link("http://erp.itst.ch.localhost:8000/desk#Form/Project/New%20Project%201", "Neues Projekt erstellen")
                     frappe.throw(f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.{link_create_project}") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
                 else:
                     raise Exception(f"Projekt '{project_name}' fehlt weiterhin.")
             
-            duplicate_imports_validation(entry["id"])
-            result = process_single_clockify_entry(entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid, clockify_api_key, clockify_base_url)
+            check_for_duplicate_import(entry["id"])
+            result = process_clockify_entry_to_erpnext(entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid, clockify_api_key, clockify_base_url)
             if result is not None:
                 imported_count += 1
         except Exception as e:
@@ -170,10 +175,10 @@ def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext
 
     frappe.db.commit() 
     if error_count > 0:
-        link_error_log = create_link("http://erp.itst.ch.localhost:8000/desk#List/Error%20Log/List", "Error log")
+        link_error_log = build_html_link("http://erp.itst.ch.localhost:8000/desk#List/Error%20Log/List", "Error log")
         frappe.throw(f"Der Importprozess wurde abgeschlossen: {imported_count} Einträge wurden erfolgreich importiert. Allerdings {error_count} Einträge sind fehlgeschlagen. Bitte überprufen Sie die Fehlerdetails unter {link_error_log}.")
     else:
-        link_timesheet = create_link("http://erp.itst.ch.localhost:8000/desk#List/Timesheet/List", "Timesheet")
+        link_timesheet = build_html_link("http://erp.itst.ch.localhost:8000/desk#List/Timesheet/List", "Timesheet")
         frappe.msgprint(f"Der Importprozess wurde erfolgreich abgeschlossen: Ingesamt wurden {imported_count} Einträge erfolgreich importiert. Sie können die importierten Daten jetzt im Timesheet-Bereich einsehen, indem Sie den folgenden Link verwenden {link_timesheet}.")
 
 @frappe.whitelist()
@@ -197,14 +202,14 @@ def run_clockify_import(user_mapping_name):
     clockify_base_url = settings.clockify_url
     clockify_tagsid = settings.tags_id
 
-    import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name, clockify_api_key, clockify_base_url, clockify_tagsid)
+    import_clockify_entries (workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name, clockify_api_key, clockify_base_url, clockify_tagsid)
 
-def project_validation(project_name):
+def validate_project_existence (project_name):
     if project_name and not frappe.db.exists("Project", {"project_name": project_name}):
         return False
     return True 
 
-def duplicate_imports_validation(entry_id):
+def check_for_duplicate_import(entry_id):
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
         frappe.throw(f"Der Eintrag mit der ID \"{entry_id}\" wurde bereits importiert. Doppelte Importe sind nicht erlaubt. Überprüfen sie die vorhandenen Einträge im Timesheet.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
 
@@ -229,11 +234,8 @@ def update_clockify_entry(workspace_id, entry, clockify_tagsid, clockify_api_key
 
 def get_import_time():
     today = datetime.utcnow().date()
-
     weekday = today.weekday()
-
     monday = today - timedelta(days=weekday)
-
     get_week_before = f"{monday.isoformat()}T00:00:00Z"
 
     return get_week_before
