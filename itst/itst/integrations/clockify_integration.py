@@ -91,8 +91,16 @@ def find_timesheet(unique_Timesheet_name):
     )
     return timesheets[0].name if timesheets else None
 
+<<<<<<< HEAD
 
 def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpnext_employee_name, clockify_tags_id, clockify_api_key, clockify_base_url):
+=======
+def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid, clockify_api_key, clockify_base_url):
+    emp_settings = frappe.get_doc("Employee Settings", {"employee":erpnext_employee_id})
+    activity_type = emp_settings.get("activity_type") #or "Support"
+    print("Activity Type:", activity_type)
+    service_item = emp_settings.get("service_item") #or "Elia"
+>>>>>>> b4d5e04... added new doctype employee settings for activity_type and category, still workin on it
     from_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["start"])
     to_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["end"])
 
@@ -118,7 +126,11 @@ def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpne
 
     company = "ITST"
     timesheet_detail_data = {
+<<<<<<< HEAD
         "activity_type": "Planung",
+=======
+        "activity_type": activity_type,
+>>>>>>> b4d5e04... added new doctype employee settings for activity_type and category, still workin on it
         "from_time": from_time,
         "to_time": to_time_str,
         "duration": duration_rounded_hhmm,
@@ -129,7 +141,11 @@ def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpne
         "billing_hours": duration_hours,
         "billing_rate": billing_rate,
         "billing_amount": billing_amount,
+<<<<<<< HEAD
         "category": "test-001",
+=======
+        "category": service_item,
+>>>>>>> b4d5e04... added new doctype employee settings for activity_type and category, still workin on it
         "remarks": clockify_entry.get("description", "Default Remarks"),
         "clockify_entry_id": entry_id
     }
