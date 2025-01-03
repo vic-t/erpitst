@@ -1,6 +1,7 @@
 import frappe
 import requests
 import re
+import math
 from datetime import datetime, timezone, timedelta
 
 
@@ -27,14 +28,13 @@ def fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clo
         return entries
     else:
 
-        frappe.log_error(f"Fehler beim Abrufen der Einträge: {response.status_code}, {response.text}")
+        frappe.log_error(f"Fehler beim Abrufen der Einträge: {response.status_code}, {response.text}. Bitte überprüfen Sie Ihre API-Schlüssel und die Anfrageparameter.")
         frappe.throw("Fehler beim Abrufen der Einträge.")
 
 def convert_iso_to_erpnext_datetime(iso_datetime):
     dt = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
     dt = dt.astimezone(timezone(timedelta(hours=1)))
     erpnext_datetime = dt.strftime("%Y-%m-%d %H:%M:%S")
-    print(erpnext_datetime)
     return erpnext_datetime
 
 def parse_duration(duration):
@@ -64,7 +64,6 @@ def create_erpnext_timesheet(company, erpnext_employee_id, timesheet_detail_data
         ],
     })    
     timesheet.insert()
-    #frappe.db.commit()
     return timesheet.name
 
 def add_detail_to_timesheet (timesheet_name, timesheet_detail_data):
@@ -79,9 +78,7 @@ def add_detail_to_timesheet (timesheet_name, timesheet_detail_data):
         **timesheet_detail_data,
     })
     timesheet.save()
-    #frappe.db.commit()
     return timesheet.name
-
 
 def find_timesheet(unique_Timesheet_name):
     timesheets = frappe.get_list(
@@ -101,6 +98,15 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
 
     duration_hours, duration_formatted = parse_duration(clockify_entry["timeInterval"]["duration"])
 
+    duration_formatted_to_int = parse_hhmm_to_minutes(duration_formatted)
+    diff_rounded = round_minutes_to_5(duration_formatted_to_int)
+    duration_formatted_new = minutes_to_hhmm(diff_rounded)
+
+    datetime_format = "%Y-%m-%d %H:%M:%S"
+    from_time_dt = datetime.strptime(from_time, datetime_format)
+    to_time_dt = from_time_dt + timedelta(minutes=diff_rounded)
+    to_time_str = to_time_dt.strftime(datetime_format)
+    
     project_name = clockify_entry["project"]["name"]
     entry_id = clockify_entry["id"]
 
@@ -112,18 +118,18 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
 
     company = "ITST"
     timesheet_detail_data = {
-        "activity_type": "Okan",
+        "activity_type": "Planung",
         "from_time": from_time,
-        "to_time": to_time,
-        "duration": duration_formatted,
+        "to_time": to_time_str,
+        "duration": duration_formatted_new,
         "hours": duration_hours,
         "project": project_name,
         "billable": clockify_entry["billable"],
-        "billing_duration": duration_formatted,
+        "billing_duration": duration_formatted_new,
         "billing_hours": duration_hours,
         "billing_rate": billing_rate,
         "billing_amount": billing_amount,
-        "category": "Elia",
+        "category": "test-001",
         "remarks": clockify_entry.get("description", "Default Remarks"),
         "clockify_entry_id": entry_id
     }
@@ -249,3 +255,20 @@ def get_import_time():
     get_week_before = f"{monday.isoformat()}T00:00:00Z"
 
     return get_week_before
+
+def parse_hhmm_to_minutes(hhmm):
+    hours_str, minutes_str = hhmm.split(":") 
+    hours = int(hours_str)
+    minutes = int(minutes_str)
+    total_minutes = hours * 60 + minutes
+    return total_minutes
+
+def round_minutes_to_5(total_minutes):
+    quotient = total_minutes / 5.0
+    rounded = int(quotient + 0.5)
+    return rounded * 5
+
+def minutes_to_hhmm(total_minutes):
+    hours = total_minutes // 60
+    minutes = total_minutes % 60
+    return f"{hours}:{minutes:02d}"
