@@ -8,7 +8,9 @@ import unittest
 
 from itst.itst.integrations.clockify_integration import (
     parse_duration,
-    parse_hhmm_to_minutes
+    parse_hhmm_to_minutes,
+    minutes_to_hhmm,
+    round_minutes_to_5
 )
 
 
@@ -27,8 +29,15 @@ class TestClockifyIntegration(unittest.TestCase):
         with self.assertRaises(frappe.ValidationError):
             parse_duration("XYZ")
 
-    #Tests for parse_hhmm_to_minutes
-    def should_ReturnNumerInThe5Series_When_ANumberInhhmmFormatIsGiven(self):
+    #Test for parse_hhmm_to_minutes
+    def should_ReturnNumerIn5MinuteInterval_When_ANumberInhhmmFormatIsGiven(self):
         total_minutes = parse_hhmm_to_minutes("2:05")
         self.assertEqual(total_minutes, 125)
 
+    #Test for minutes_to_hhmm
+    def should_ReturnNumerinhhmmFormat_When_ANumberIn5MinuteIntervalIsGiven(self):
+        hhmm = minutes_to_hhmm(125)
+        self.assertEqual(hhmm, "2:05")
+    
+    #Test for round_minutes_to_5
+    def should_Return
