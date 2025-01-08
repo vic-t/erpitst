@@ -40,4 +40,6 @@ class TestClockifyIntegration(unittest.TestCase):
         self.assertEqual(hhmm, "2:05")
     
     #Test for round_minutes_to_5
-    def should_Return
+    def should_RoundToTheNext5MinuteIntervalNumber_When_ANumberIsGiven(self):
+        self.assertEqual(round_minutes_to_5(123), 125)
+        self.assertEqual(round_minutes_to_5(88), 90)
