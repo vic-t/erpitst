@@ -10,7 +10,8 @@ from itst.itst.integrations.clockify_integration import (
     parse_duration,
     parse_hhmm_to_minutes,
     minutes_to_hhmm,
-    round_minutes_to_5
+    round_minutes_to_5,
+    convert_iso_to_erpnext_datetime
 )
 
 
@@ -43,3 +44,11 @@ class TestClockifyIntegration(unittest.TestCase):
     def should_RoundToTheNext5MinuteIntervalNumber_When_ANumberIsGiven(self):
         self.assertEqual(round_minutes_to_5(123), 125)
         self.assertEqual(round_minutes_to_5(88), 90)
+
+    #Test for convert_iso_to_erpnext_datetime
+    def should_ConvertISOToErpnextDatetime_When_ISOStringIsGiven(self):
+        iso_str = "2025-01-01T10:30:00Z" # UTC
+        erp_dt = convert_iso_to_erpnext_datetime(iso_str)
+
+        #In Funktion wird + 1h gerechnet weil Zeitzone Zürich + 1h von UTC ist
+        self.assertEqual(erp_dt, "2025-01-01 11:30:00")
