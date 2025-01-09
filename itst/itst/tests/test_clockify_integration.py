@@ -13,7 +13,8 @@ from itst.itst.integrations.clockify_integration import (
     round_minutes_to_5,
     convert_iso_to_erpnext_datetime,
     build_html_link,
-    validate_project_existence
+    validate_project_existence,
+    duplicate_imports_validation
 )
 
 
@@ -76,3 +77,24 @@ class TestClockifyIntegration(unittest.TestCase):
 
     def test_should_ReturnFalse_When_ProjectDoesNotExist(self):
         self.assertFalse(validate_project_existence("Test_Project1"))
+
+
+    #Tests for duplicate_imports_validation
+    def test_should_RetrunError_When_ImportIsAnDuplicate(self):
+        timesheet_doc = frappe.get_doc({
+            "doctype": "Timesheet",
+            "time_logs": [
+                {
+                    "doctype": "Timesheet Detail",
+                    "clockify_entry_id": 1234567890
+                }
+            ],
+        })  
+        timesheet_doc.insert()
+
+        with self.assertRaises(frappe.ValidationError):
+            duplicate_imports_validation(1234567890)
+        frappe.db.rollback()
+
+    def test_should_RetrunNone_When_ImportIsNotADuplicate(self):
+        self.assertIsNone(duplicate_imports_validation(123456789))
