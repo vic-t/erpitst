@@ -11,12 +11,13 @@ from itst.itst.integrations.clockify_integration import (
     parse_hhmm_to_minutes,
     minutes_to_hhmm,
     round_minutes_to_5,
-    convert_iso_to_erpnext_datetime
+    convert_iso_to_erpnext_datetime,
+    build_html_link
 )
 
 
 class TestClockifyIntegration(unittest.TestCase):
-    
+
     def test_basic_assertion(self):
           self.assertTrue(True, "Dies ist nur ein Dummy-Test, der immer True ist.")
 
@@ -52,3 +53,11 @@ class TestClockifyIntegration(unittest.TestCase):
 
         #In Funktion wird + 1h gerechnet weil Zeitzone Zürich + 1h von UTC ist
         self.assertEqual(erp_dt, "2025-01-01 11:30:00")
+
+    #Tests for build_html_link
+    def test_should_ReturnCorrectHTMLLink_When_ALinkIsGiven(self):
+        link = build_html_link("http://example.com", "Klicke hier")
+
+        self.assertIn("<a href=", link)
+        self.assertIn("http://example.com", link)
+        self.assertIn("Klicke hier", link)
