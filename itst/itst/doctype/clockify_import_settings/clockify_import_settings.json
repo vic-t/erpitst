@@ -23,20 +23,20 @@
    "options": "Clockify User Mapping"
   },
   {
-   "fieldname": "api_key",
-   "fieldtype": "Password",
-   "label": "API key"
-  },
-  {
-   "fieldname": "clockify_url",
-   "fieldtype": "Data",
-   "label": "Clockify URL"
-  },
-  {
-   "fieldname": "tags_id",
-   "fieldtype": "Data",
-   "label": "Tag Id"
-  }
+    "fieldname": "api_key",
+    "fieldtype": "Password",
+    "label": "API key"
+   },
+   {
+    "fieldname": "clockify_url",
+    "fieldtype": "Data",
+    "label": "Clockify URL"
+   },
+   {
+    "fieldname": "tags_id",
+    "fieldtype": "Data",
+    "label": "Tag Id"
+   }
  ],
  "issingle": 1,
  "modified": "2024-12-23 10:32:20.265424",

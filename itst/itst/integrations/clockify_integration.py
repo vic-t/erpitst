@@ -3,9 +3,14 @@ import requests
 import re
 from datetime import datetime, timezone, timedelta
 
+<<<<<<< HEAD
 
 def fetch_clockify_entries_for_week(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url):
     week_start_iso = get_import_time()
+=======
+def fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url):
+    week_start_iso  = get_import_time()
+>>>>>>> 4f7ee2f... deleted employee settings doctype
     endpoint_url = f"{clockify_base_url}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": clockify_api_key}
 
@@ -13,7 +18,11 @@ def fetch_clockify_entries_for_week(workspace_id, clockify_user_id, clockify_api
     end = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%dT00:00:00Z")
     
     params = {
+<<<<<<< HEAD
         "get-week-before": week_start_iso,   
+=======
+        #"get-week-before": week_start_iso ,   
+>>>>>>> 4f7ee2f... deleted employee settings doctype
         "hydrated": "true",
         "page": 1,
         "page-size": 5000,
@@ -96,11 +105,15 @@ def find_timesheet(unique_Timesheet_name):
 def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpnext_employee_name, clockify_tags_id, clockify_api_key, clockify_base_url):
 =======
 def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid, clockify_api_key, clockify_base_url):
+<<<<<<< HEAD
     emp_settings = frappe.get_doc("Employee Settings", {"employee":erpnext_employee_id})
     activity_type = emp_settings.get("activity_type") #or "Support"
     print("Activity Type:", activity_type)
     service_item = emp_settings.get("service_item") #or "Elia"
 >>>>>>> b4d5e04... added new doctype employee settings for activity_type and category, still workin on it
+=======
+    
+>>>>>>> 4f7ee2f... deleted employee settings doctype
     from_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["start"])
     to_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["end"])
 
@@ -109,12 +122,20 @@ def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpne
     duration_in_minutes = parse_hhmm_to_minutes(duration_formatted)
     duration_rounded_in_minutes = round_minutes_to_5(duration_in_minutes)
     duration_rounded_hhmm = minutes_to_hhmm(duration_rounded_in_minutes)
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 4f7ee2f... deleted employee settings doctype
     datetime_format = "%Y-%m-%d %H:%M:%S"
     from_time_dt = datetime.strptime(from_time, datetime_format)
     to_time_dt = from_time_dt + timedelta(minutes=duration_rounded_in_minutes)
     to_time_str = to_time_dt.strftime(datetime_format)
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 4f7ee2f... deleted employee settings doctype
     project_name = clockify_entry["project"]["name"]
     entry_id = clockify_entry["id"]
 
@@ -127,10 +148,14 @@ def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpne
     company = "ITST"
     timesheet_detail_data = {
 <<<<<<< HEAD
+<<<<<<< HEAD
         "activity_type": "Planung",
 =======
         "activity_type": activity_type,
 >>>>>>> b4d5e04... added new doctype employee settings for activity_type and category, still workin on it
+=======
+        "activity_type": "Support",
+>>>>>>> 4f7ee2f... deleted employee settings doctype
         "from_time": from_time,
         "to_time": to_time_str,
         "duration": duration_rounded_hhmm,
@@ -142,10 +167,14 @@ def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpne
         "billing_rate": billing_rate,
         "billing_amount": billing_amount,
 <<<<<<< HEAD
+<<<<<<< HEAD
         "category": "test-001",
 =======
         "category": service_item,
 >>>>>>> b4d5e04... added new doctype employee settings for activity_type and category, still workin on it
+=======
+        "category": "Elia",
+>>>>>>> 4f7ee2f... deleted employee settings doctype
         "remarks": clockify_entry.get("description", "Default Remarks"),
         "clockify_entry_id": entry_id
     }
@@ -188,7 +217,7 @@ def import_clockify_entries_to_timesheet (workspace_id, clockify_user_id, erpnex
                 if project_name not in missing_projects:
                     missing_projects.add(project_name)
                     create_project_link = build_html_link("http://erp.itst.ch.localhost:8000/desk#Form/Project/New%20Project%201", "Neues Projekt erstellen")
-                    frappe.throw(f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.{create_project_link}") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
+                    frappe.throw(f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.{create_project_link}") 
                 else:
                     raise Exception(f"Projekt '{project_name}' fehlt weiterhin.")
             
@@ -197,7 +226,7 @@ def import_clockify_entries_to_timesheet (workspace_id, clockify_user_id, erpnex
             if result is not None:
                 imported_entries_count += 1
         except Exception as e:
-            frappe.log_error(frappe.get_traceback(), f"Fehler bei der Verarbeitung des Clockify-Eintrags. {entry.get('id')}") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
+            frappe.log_error(frappe.get_traceback(), f"Fehler bei der Verarbeitung des Clockify-Eintrags. {entry.get('id')}") 
             error_count += 1
             failed_entries_info.append(f"Eintrag {entry.get('id')}: {str(e)}")
 
@@ -242,7 +271,11 @@ def duplicate_imports_validation(entry_id):
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
         frappe.throw(f"Der Eintrag mit der ID \"{entry_id}\" wurde bereits importiert. Doppelte Importe sind nicht erlaubt. Überprüfen sie die vorhandenen Einträge im Timesheet.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
 
+<<<<<<< HEAD
 def update_clockify_entry(workspace_id, entry, clockify_tags_id, clockify_api_key, clockify_base_url):
+=======
+def update_clockify_entry(workspace_id, entry, clockify_tagsid, clockify_api_key, clockify_base_url):
+>>>>>>> 4f7ee2f... deleted employee settings doctype
     endpoint_url = f"{clockify_base_url}/workspaces/{workspace_id}/time-entries/{entry['id']}"
     headers = {"X-Api-Key": clockify_api_key, "Content-Type": "application/json"}
 
@@ -264,9 +297,14 @@ def get_import_time():
     today = datetime.utcnow().date()
     weekday = today.weekday()
     monday = today - timedelta(days=weekday)
+<<<<<<< HEAD
 
     week_start_iso = f"{monday.isoformat()}T00:00:00Z"
     return week_start_iso
+=======
+    week_start_iso  = f"{monday.isoformat()}T00:00:00Z"
+    return week_start_iso 
+>>>>>>> 4f7ee2f... deleted employee settings doctype
 
 def parse_hhmm_to_minutes(hhmm):
     hours_str, minutes_str = hhmm.split(":") 
@@ -283,4 +321,8 @@ def round_minutes_to_5(total_minutes):
 def minutes_to_hhmm(total_minutes):
     hours = total_minutes // 60
     minutes = total_minutes % 60
+<<<<<<< HEAD
     return f"{hours}:{minutes:02d}"
+=======
+    return f"{hours}:{minutes:02d}"
+>>>>>>> 4f7ee2f... deleted employee settings doctype
