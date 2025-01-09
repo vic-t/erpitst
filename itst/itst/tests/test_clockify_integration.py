@@ -12,7 +12,8 @@ from itst.itst.integrations.clockify_integration import (
     minutes_to_hhmm,
     round_minutes_to_5,
     convert_iso_to_erpnext_datetime,
-    build_html_link
+    build_html_link,
+    validate_project_existence
 )
 
 
@@ -54,10 +55,24 @@ class TestClockifyIntegration(unittest.TestCase):
         #In Funktion wird + 1h gerechnet weil Zeitzone Zürich + 1h von UTC ist
         self.assertEqual(erp_dt, "2025-01-01 11:30:00")
 
-    #Tests for build_html_link
+    #Test for build_html_link
     def test_should_ReturnCorrectHTMLLink_When_ALinkIsGiven(self):
         link = build_html_link("http://example.com", "Klicke hier")
 
         self.assertIn("<a href=", link)
         self.assertIn("http://example.com", link)
         self.assertIn("Klicke hier", link)
+
+    #Tests for validate_project_existence
+    def test_should_ReturnTrue_When_ProjectDoesExist(self):
+        project_doc = frappe.get_doc({
+            "doctype": "Project",
+            "project_name": "Test_Project",
+            "status": "Open"
+        })
+        project_doc.insert()
+        self.assertTrue(validate_project_existence("Test_Project"))
+        frappe.db.rollback()
+
+    def test_should_ReturnFalse_When_ProjectDoesNotExist(self):
+        self.assertFalse(validate_project_existence("Test_Project1"))
