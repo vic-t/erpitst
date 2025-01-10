@@ -16,7 +16,8 @@ from itst.itst.integrations.clockify_integration import (
     validate_project_existence,
     duplicate_imports_validation,
     create_erpnext_timesheet,
-    add_detail_to_timesheet
+    add_detail_to_timesheet,
+    find_timesheet
 )
 
 
@@ -124,7 +125,7 @@ class TestClockifyIntegration(unittest.TestCase):
 
         company_doc = frappe.get_doc({
             "doctype": "Company",
-            "company_name": "Test Company",
+            "company_name": "Test_Company",
             "abbr": "TC",
             "default_currency": "CHF",
             "country": "Switzerland"
@@ -135,7 +136,7 @@ class TestClockifyIntegration(unittest.TestCase):
             "doctype": "Employee",
             "naming_series": "HR-EMP-00001",
             "first_name": "Test",
-            "company": "Test Company",
+            "company": "Test_Company",
             "status": "Active",
             "gender": "Male",
             "date_of_birth": "2025-01-01",
@@ -237,4 +238,57 @@ class TestClockifyIntegration(unittest.TestCase):
         self.assertEqual(len(doc_after.time_logs), 2)
         self.assertEqual(doc_after.time_logs[1].clockify_entry_id, "9876543210")
 
-        frappe.db.rollback
+        frappe.db.rollback()
+
+    #Test for find_timesheet
+    def test_should_ReturnTimesheetNameOrNone_When_TimesheetNameisGiven(self):
+        company_doc = frappe.get_doc({
+            "doctype": "Company",
+            "company_name": "Test_Company",
+            "abbr": "T_C",
+            "default_currency": "CHF",
+            "country": "Switzerland"
+        })
+        company_doc.insert()
+         
+        employee_doc = frappe.get_doc({
+            "doctype": "Employee",
+            "naming_series": "HR-EMP-00001",
+            "first_name": "Test",
+            "company": "Test_Company",
+            "status": "Active",
+            "gender": "Male",
+            "date_of_birth": "2025-01-01",
+            "date_of_joining": "2025-08-01"
+        })
+        employee_doc.insert()
+
+        timesheet_doc = frappe.get_doc({
+            "doctype": "Timesheet",
+            "company": "Test_Company",
+            "employee": "HR-EMP-00001",
+            "title": "TestTimesheet",
+            "time_logs": [
+                {
+                    "doctype": "Timesheet Detail",
+                    "activity_type": "Planning",
+                    "from_time": "2025-01-02 09:00:00",
+                    "to_time": "2025-01-02 10:00:00",
+                    "duration": "1:00",
+                    "hours": 1.0,
+                    "clockify_entry_id": 1234567890
+                }
+            ]
+        })
+        timesheet_doc.insert()
+        timesheet_name = timesheet_doc.name
+
+        #no Timesheet with title "OtherTimesheet"
+        result_none = find_timesheet("OtherTimesheet")
+        self.assertIsNone(result_none)
+
+        #Timesheet with title that exists
+        result_ts = find_timesheet("TestTimesheet")
+        self.assertEqual(result_ts, timesheet_name)
+
+        frappe.db.rollback()
