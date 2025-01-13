@@ -349,7 +349,7 @@ class TestClockifyIntegration(unittest.TestCase):
     @patch("requests.put")
     def test_should_ThrowsExecption_When_WhenConnectionToAPIIsNotSuccessful(self, mock_put):
         mock_resp = MagicMock()
-        mock_resp.status_code = 401
+        mock_resp.status_code = 400
         mock_put.return_value = mock_resp
 
         entry_data = {
@@ -361,9 +361,6 @@ class TestClockifyIntegration(unittest.TestCase):
             "projectId": "123456789"
         }
 
-        
-
-
         with self.assertRaises(frappe.ValidationError):
             update_clockify_entry(
                 workspace_id="testWorkspace",
@@ -372,5 +369,5 @@ class TestClockifyIntegration(unittest.TestCase):
                 clockify_api_key="fake_key",
                 clockify_base_url="https://api.clockify.me/api/v1"
             )
-            
+
             mock_put.assert_called_once()
