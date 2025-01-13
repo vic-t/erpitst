@@ -10,10 +10,10 @@ def fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clo
     headers = {"X-Api-Key": clockify_api_key}
 
     params = {
-        "get-week-before": week_start_iso ,
+        "get-week-before": week_start_iso ,   
         "hydrated": "true",
         "page": 1,
-        "page-size": 5000,
+        "page-size": 5000
     }
 
     response = requests.get(endpoint_url, headers=headers, params=params)
