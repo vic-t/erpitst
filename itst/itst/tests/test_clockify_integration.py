@@ -107,7 +107,7 @@ class TestClockifyIntegration(unittest.TestCase):
 
     #Test for fetch_clockify_entries_for_week
     @patch("requests.get")
-    def test_should_GetsTimeEntriesOfLastWeek_When_APICallIsSuccesfull(self, mock_requests_get):
+    def test_should_GetTimeEntriesOfLastWeek_When_APICallIsSuccesfull(self, mock_requests_get):
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = [
@@ -116,11 +116,20 @@ class TestClockifyIntegration(unittest.TestCase):
         ]
         mock_requests_get.return_value = mock_response
 
-        # Aufruf
         result = fetch_clockify_entries_for_week("ws123", "user456", "dummy_key", "https://api.clockify.me/api/v1")
 
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]["id"], "entry1")
+
+    @patch("requests.get")
+    def test_should_ThrowException_When_APICallIsNotSuccesfull(self, mock_requests_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+        mock_response.text = "Unauthorized"
+        mock_requests_get.return_value = mock_response
+
+        with self.assertRaises(frappe.ValidationError):
+            fetch_clockify_entries_for_week("ws123", "user456", "dummy_key", "https://api.clockify.me/api/v1")
 
     #Test for create_erpnext_timesheet
     def test_should_CreateTimesheet_When_IsBeingPassed(self):
