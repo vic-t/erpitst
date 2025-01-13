@@ -2,9 +2,11 @@
 # Copyright (c) 2025, ITST and Contributors
 # See license.txt
 from __future__ import unicode_literals
+import unittest
 
 import frappe
-import unittest
+import requests
+from unittest.mock import patch, MagicMock
 
 from itst.itst.integrations.clockify_integration import (
     parse_duration,
@@ -17,7 +19,8 @@ from itst.itst.integrations.clockify_integration import (
     duplicate_imports_validation,
     create_erpnext_timesheet,
     add_detail_to_timesheet,
-    find_timesheet
+    find_timesheet,
+    fetch_clockify_entries_for_week
 )
 
 
@@ -103,9 +106,21 @@ class TestClockifyIntegration(unittest.TestCase):
         self.assertIsNone(duplicate_imports_validation(123456789))
 
     #Test for fetch_clockify_entries_for_week
-    def test_should_GetsTimeEntriesOfLastWeek_When_APICallIsSuccesfull(self):
-        #mache ich später weil ich gerade nicht weis wie vorgehen.
-        pass
+    @patch("requests.get")
+    def test_should_GetsTimeEntriesOfLastWeek_When_APICallIsSuccesfull(self, mock_requests_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {"id": "entry1"},
+            {"id": "entry2"}
+        ]
+        mock_requests_get.return_value = mock_response
+
+        # Aufruf
+        result = fetch_clockify_entries_for_week("ws123", "user456", "dummy_key", "https://api.clockify.me/api/v1")
+
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["id"], "entry1")
 
     #Test for create_erpnext_timesheet
     def test_should_CreateTimesheet_When_IsBeingPassed(self):
@@ -292,3 +307,8 @@ class TestClockifyIntegration(unittest.TestCase):
         self.assertEqual(result_ts, timesheet_name)
 
         frappe.db.rollback()
+
+    #Test for update_clockify_entry
+    def test_should_CreatePUTRequestToClockify_When_NoErrorHasOccured(self):
+        #mache ich später weil ich gerade nicht weis wie vorgehen.
+        pass
