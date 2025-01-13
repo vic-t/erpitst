@@ -20,7 +20,8 @@ from itst.itst.integrations.clockify_integration import (
     create_erpnext_timesheet,
     add_detail_to_timesheet,
     find_timesheet,
-    fetch_clockify_entries_for_week
+    fetch_clockify_entries_for_week,
+    update_clockify_entry
 )
 
 
@@ -318,6 +319,58 @@ class TestClockifyIntegration(unittest.TestCase):
         frappe.db.rollback()
 
     #Test for update_clockify_entry
-    def test_should_CreatePUTRequestToClockify_When_NoErrorHasOccured(self):
-        #mache ich später weil ich gerade nicht weis wie vorgehen.
-        pass
+    @patch("requests.put")
+    def test_should_PUTRequestToClockify_When_WhenConnectionToAPIIsSuccessful(self, mock_put):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_put.return_value = mock_resp
+
+        entry_data = {
+            "id": "entry123",
+            "timeInterval": {
+                "start": "2025-01-03T09:00:00Z",
+                "end": "2025-01-03T10:00:00Z"
+            },
+            "projectId": "123456789"
+        }
+
+        update_clockify_entry(
+            workspace_id="testWorkspace",
+            entry=entry_data,
+            clockify_tags_id="fake_tag",
+            clockify_api_key="fake_key",
+            clockify_base_url="https://api.clockify.me/api/v1"
+        )
+
+
+        mock_put.assert_called_once()
+
+#Test for update_clockify_entry
+    @patch("requests.put")
+    def test_should_ThrowsExecption_When_WhenConnectionToAPIIsNotSuccessful(self, mock_put):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 401
+        mock_put.return_value = mock_resp
+
+        entry_data = {
+            "id": "entry123",
+            "timeInterval": {
+                "start": "2025-01-03T09:00:00Z",
+                "end": "2025-01-03T10:00:00Z"
+            },
+            "projectId": "123456789"
+        }
+
+        
+
+
+        with self.assertRaises(frappe.ValidationError):
+            update_clockify_entry(
+                workspace_id="testWorkspace",
+                entry=entry_data,
+                clockify_tags_id="fake_tag",
+                clockify_api_key="fake_key",
+                clockify_base_url="https://api.clockify.me/api/v1"
+            )
+            
+            mock_put.assert_called_once()
