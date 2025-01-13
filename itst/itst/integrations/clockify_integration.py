@@ -2,21 +2,18 @@ import frappe
 import requests
 import re
 from datetime import datetime, timezone, timedelta
+import pytz
 
 def fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url):
     week_start_iso  = get_import_time()
     endpoint_url = f"{clockify_base_url}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": clockify_api_key}
 
-    start = datetime.utcnow().strftime("%Y-%m-%dT00:00:00Z")
-    end = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%dT00:00:00Z")
     params = {
-        #"get-week-before": week_start_iso ,   
+        "get-week-before": week_start_iso ,
         "hydrated": "true",
         "page": 1,
         "page-size": 5000,
-        "start": start, 
-        "end": end
     }
 
     response = requests.get(endpoint_url, headers=headers, params=params)
@@ -29,11 +26,11 @@ def fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clo
         frappe.throw("Fehler beim Abrufen der Einträge.")
 
 def convert_iso_to_erpnext_datetime(iso_datetime):
+    target_timezone_str = get_default_timezone()
     datetime_obj = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
-    #get timezone dynamically, not hardcoded, get timezone via config or parameter
-    datetime_obj = datetime_obj.astimezone(timezone(timedelta(hours=1)))
-    erpnext_datetime = datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
-    return erpnext_datetime
+    target_timezone = pytz.timezone(target_timezone_str)
+    datetime_obj = datetime_obj.astimezone(target_timezone)
+    return datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
 
 def parse_duration(duration):
     hours = 0
@@ -267,3 +264,6 @@ def minutes_to_hhmm(total_minutes):
     hours = total_minutes // 60
     minutes = total_minutes % 60
     return f"{hours}:{minutes:02d}"
+
+def get_default_timezone ():
+    return "Europe/Zurich"
