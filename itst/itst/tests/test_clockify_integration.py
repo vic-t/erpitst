@@ -26,10 +26,6 @@ from itst.itst.integrations.clockify_integration import (
 
 
 class TestClockifyIntegration(unittest.TestCase):
-
-    def test_basic_assertion(self):
-          self.assertTrue(True, "Dies ist nur ein Dummy-Test, der immer True ist.")
-
     #Tests for parse_duration
     def test_should_ReturnCorrectDurationAndHour_When_ParsingDuration(self):
         hours, duration_str = parse_duration("PT1H30M")
