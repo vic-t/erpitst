@@ -104,29 +104,6 @@ def import_clockify_entries_to_timesheet (workspace_id, clockify_user_id, erpnex
         timesheet_link = build_html_link("http://erp.itst.ch.localhost:8000/desk#List/Timesheet/List", "Timesheet")
         frappe.msgprint(f"Der Importprozess wurde erfolgreich abgeschlossen: Ingesamt wurden {imported_entries_count} Einträge erfolgreich importiert. Sie können die importierten Daten jetzt im Timesheet-Bereich einsehen, indem Sie den folgenden Link verwenden {timesheet_link}.")
 
-
-@frappe.whitelist()
-def run_clockify_import(user_mapping_name, dienstleistungs_artikel, activity_type):
-    clockify_import_settings = frappe.get_doc("Clockify Import Settings")
-    workspace_id = clockify_import_settings.workspace_id
-
-    selected_mapping = None
-    for user in clockify_import_settings.user_mapping:
-        if user.erpnext_employee == user_mapping_name:
-            selected_mapping = user
-            break
-    if not selected_mapping:
-        frappe.throw("Ausgewählter user nicht gefunden. Bitte Import nochmals versuchen")
-    
-    clockify_user_id = selected_mapping.clockify_user_id
-    erpnext_employee_id = selected_mapping.erpnext_employee
-    erpnext_employee_name = selected_mapping.erpnext_employee_name
-    clockify_api_key = clockify_import_settings.get_password('api_key')
-    clockify_base_url = clockify_import_settings.clockify_url
-    clockify_tags_id = clockify_import_settings.tags_id
-
-    import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name, clockify_api_key, clockify_base_url, clockify_tags_id, dienstleistungs_artikel, activity_type)
-
 def validate_project_existence (project_name):
     if project_name and not frappe.db.exists("Project", {"project_name": project_name}):
         return False
