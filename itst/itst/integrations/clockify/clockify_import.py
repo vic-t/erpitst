@@ -1,8 +1,8 @@
 import frappe
 from datetime import datetime, timedelta
 
-from .clockify_service import fetch_clockify_entries, update_clockify_entry
-from .erpnext_timesheet_service import (
+from .clockify_api import fetch_clockify_entries, update_clockify_entry
+from .erpnext_timesheet import (
     create_erpnext_timesheet,
     add_detail_to_timesheet,
     find_timesheet
