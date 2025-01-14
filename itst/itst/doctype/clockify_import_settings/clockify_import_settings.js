@@ -80,7 +80,7 @@ frappe.ui.form.on('Clockify Import Settings', {
 				  ],
 				  function(values) {
 					frappe.call({
-					  method: "itst.itst.integrations.clockify.clockify_import.run_clockify_import",
+					  method: "itst.itst.integrations.clockify.run_clockify_import.run_clockify_import",
 					  args: {
 						user_mapping_name: values.selected_user_mapping,
 						activity_type: values.activity_type,

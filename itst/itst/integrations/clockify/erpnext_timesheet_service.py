@@ -1,7 +1,7 @@
 import frappe
 from typing import Optional, Dict
 
-class ERPNextTimesheet:
+class ERPNextTimesheetService:
     def __init__(self, company: str):
         self.company = company
     

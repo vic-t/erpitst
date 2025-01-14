@@ -1,7 +1,7 @@
 import frappe
-from .clockify_api import ClockifyService
-from .erpnext_timesheet import ERPNextTimesheet
-from .clockify_import import import_clockify_entries_to_timesheet
+from .clockify_service import ClockifyService
+from .erpnext_timesheet_service import ERPNextTimesheetService
+from .import_controller import import_clockify_entries_to_timesheet
 
 @frappe.whitelist()
 def run_clockify_import(user_mapping_name, dienstleistungs_artikel, activity_type):
@@ -21,18 +21,15 @@ def run_clockify_import(user_mapping_name, dienstleistungs_artikel, activity_typ
     erpnext_employee_name = selected_mapping.erpnext_employee_name
     clockify_api_key = clockify_import_settings.get_password("api_key")
     clockify_base_url = clockify_import_settings.clockify_url
-    clockify_tags_id = clockify_import_settings.clockify_tags_id
+    clockify_tags_id = clockify_import_settings.tags_id
 
-    # 1) ClockifyService instanzieren
     clockify_service = ClockifyService(
         api_key=clockify_api_key,
         base_url=clockify_base_url
     )
 
-    # 2) ERPNextTimesheetService instanzieren
-    timesheet_service = ERPNextTimesheet(company="ITST")
+    timesheet_service = ERPNextTimesheetService(company="ITST")
 
-    # 3) Import starten
     import_clockify_entries_to_timesheet(
         clockify_service,
         timesheet_service,
