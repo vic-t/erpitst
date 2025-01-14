@@ -1,13 +1,14 @@
 import re
 from datetime import datetime, timezone, timedelta
+from typing import Tuple
 
-def convert_iso_to_erpnext_datetime(iso_datetime):
+def convert_iso_to_erpnext_datetime(iso_datetime: str) -> str:
     #get timezone dynamically, not hardcoded, get timezone via config or parameter
     datetime_obj = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
     datetime_obj = datetime_obj.astimezone(timezone(timedelta(hours=1)))
     return datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
 
-def parse_duration(duration):
+def parse_duration(duration: str) -> Tuple[float, str]:
     hours, minutes = 0, 0
     match = re.match(r"PT((\d+)H)?((\d+)M)?", duration)
     if not match:
@@ -20,19 +21,19 @@ def parse_duration(duration):
 
     return hours + (minutes / 60), f"{hours}:{minutes:02}"
 
-def parse_hhmm_to_minutes(hhmm):
+def parse_hhmm_to_minutes(hhmm: str) -> int:
     hours_str, minutes_str = hhmm.split(":")
     return int(hours_str) * 60 + int(minutes_str)
 
-def round_minutes_to_5(total_minutes):
+def round_minutes_to_5(total_minutes: int) -> int:
     return int(round(total_minutes / 5.0)) * 5
 
-def minutes_to_hhmm(total_minutes):
+def minutes_to_hhmm(total_minutes: int) -> str:
     hours = total_minutes // 60
     minutes = total_minutes % 60
     return f"{hours}:{minutes:02d}"
 
-def build_html_link(url,text):
+def build_html_link(url: str, text: str) -> str:
     return f"""
     <a href="{url}"
     target="_blank" 
@@ -41,7 +42,7 @@ def build_html_link(url,text):
     </a>
 """
 
-def get_week_start_iso():
+def get_week_start_iso() -> str:
     today = datetime.utcnow().date()
     weekday = today.weekday()
     monday = today - timedelta(days=weekday)
