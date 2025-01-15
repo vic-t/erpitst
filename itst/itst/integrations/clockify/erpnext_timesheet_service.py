@@ -2,26 +2,28 @@ import frappe
 from typing import Optional, Dict
 
 class ERPNextTimesheetService:
-    def __init__(self, company: str):
+    def __init__(self, company: str, timesheet_detail_data: Dict, timesheet_title: str):
         self.company = company
+        self.timesheet_detail_data = timesheet_detail_data
+        self.timesheet_title = timesheet_title
     
-    def create_timesheet(self, erpnext_employee_id: str, timesheet_title: str, timesheet_detail_data: Dict) -> str:
+    def create_timesheet(self, erpnext_employee_id: str) -> str:
         timesheet = frappe.get_doc({
             "doctype": "Timesheet",
             "company": self.company,
             "employee": erpnext_employee_id,
-            "title": timesheet_title ,
+            "title": self.timesheet_title ,
             "time_logs": [
                 {
                     "doctype": "Timesheet Detail",
-                    **timesheet_detail_data,
+                    **self.timesheet_detail_data,
                 }
             ],
         })    
         timesheet.insert()
         return timesheet.name
 
-    def add_detail_to_timesheet(self, timesheet_name: str, timesheet_detail_data: Dict) -> str:
+    def add_detail_to_timesheet(self, timesheet_name: str) -> str:
         timesheet = frappe.get_doc("Timesheet", timesheet_name)
 
         for time_log in timesheet.time_logs:
@@ -30,16 +32,16 @@ class ERPNextTimesheetService:
 
         timesheet.append("time_logs", {
             "doctype": "Timesheet Detail",
-            **timesheet_detail_data
+            **self.timesheet_detail_data
         })
         timesheet.save()
         return timesheet.name
     
-    def find_timesheet(self, timesheet_title: str) -> Optional[str]:
+    def find_timesheet(self) -> Optional[str]:
         timesheets = frappe.get_list(
             "Timesheet",
             filters={
-                "title": timesheet_title ,
+                "title": self.timesheet_title ,
                 "status": "Draft"
                 },  # Filtering by title and Draft documents
             fields=["name"]
