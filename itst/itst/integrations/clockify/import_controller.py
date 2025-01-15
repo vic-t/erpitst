@@ -23,22 +23,12 @@ def duplicate_imports_validation(entry_id: str):
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
         frappe.throw(f"Der Eintrag mit der ID \"{entry_id}\" wurde bereits importiert. Doppelte Importe sind nicht erlaubt. Überprüfen sie die vorhandenen Einträge im Timesheet.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
 
-def process_clockify_entry_to_erpnext(
-    entry: Dict,
-    employee_id: str,
-    employee_name: str,
-    dienstleistungs_artikel: str,
-    activity_type: str,
-    timesheet_service: ERPNextTimesheetService,
-    clockify_service: ClockifyService,
-    clockify_tags_id: str
-) -> str:
+def _calculate_times(entry: Dict) -> Dict[str, str]:
     from_time = convert_iso_to_erpnext_datetime(entry["timeInterval"]["start"])
 
     try:
         duration_hours, duration_formatted = parse_duration(entry["timeInterval"]["duration"])
     except ValueError as e:
-        # change error to frappe.throw
         frappe.throw(str(e))
 
     duration_in_minutes = parse_hhmm_to_minutes(duration_formatted)
@@ -50,23 +40,45 @@ def process_clockify_entry_to_erpnext(
     to_time_dt = from_time_dt + timedelta(minutes=duration_rounded_in_minutes)
     to_time_str = to_time_dt.strftime(datetime_format)
 
+    return {
+        "from_time_str": from_time,
+        "to_time_str": to_time_str,
+        "duration_rounded_hhmm": duration_rounded_hhmm,
+        "duration_hours": duration_hours
+    }
+
+def process_clockify_entry_to_erpnext(
+    entry: Dict,
+    employee_id: str,
+    employee_name: str,
+    dienstleistungs_artikel: str,
+    activity_type: str,
+    timesheet_service: ERPNextTimesheetService,
+    clockify_service: ClockifyService,
+    clockify_tags_id: str
+) -> str:
+
     project_name = entry["project"]["name"]
     entry_id = entry["id"]
+
+    time_data = _calculate_times(entry)
+
     timesheet_title = f"{employee_name}_{project_name}"
     timesheet_name = timesheet_service.find_timesheet(timesheet_title)
+
     billing_rate = entry["hourlyRate"]["amount"] / 100
-    billing_amount = billing_rate * duration_hours
+    billing_amount = billing_rate * time_data["duration_hours"]
 
     timesheet_detail_data = {
         "activity_type": activity_type,
-        "from_time": from_time,
-        "to_time": to_time_str,
-        "duration": duration_rounded_hhmm,
-        "hours": duration_hours,
+        "from_time": time_data["from_time_str"],
+        "to_time": time_data["to_time_str"],
+        "duration": time_data["duration_rounded_hhmm"],
+        "hours": time_data["duration_hours"],
         "project": project_name,
         "billable": entry["billable"],
-        "billing_duration": duration_rounded_hhmm,
-        "billing_hours": duration_hours,
+        "billing_duration": time_data["duration_rounded_hhmm"],
+        "billing_hours": time_data["duration_hours"],
         "billing_rate": billing_rate,
         "billing_amount": billing_amount,
         "category": dienstleistungs_artikel,
@@ -74,14 +86,14 @@ def process_clockify_entry_to_erpnext(
         "clockify_entry_id": entry_id
     }
 
-    data = {
+    clockify_update_data = {
         "description": entry.get("description", "No description"),
         "end": entry["timeInterval"]["end"],
         "projectId": entry["projectId"],
         "start": entry["timeInterval"]["start"],
         "tagIds": [clockify_tags_id]
     }
-    clockify_service.update_clockify_entry(entry["workspaceId"], entry_id, data)
+    clockify_service.update_clockify_entry(entry["workspaceId"], entry_id, clockify_update_data )
 
     if timesheet_name:
         timesheet_service.add_detail_to_timesheet(timesheet_name, timesheet_detail_data)
