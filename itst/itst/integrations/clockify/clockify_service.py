@@ -2,6 +2,9 @@ import requests
 import frappe
 from typing import List, Dict, Optional
 
+DEFAULT_PAGE_NUMBER = 1
+MAX_PAGE_SIZE = 5000
+
 class ClockifyService:
     def __init__(self, api_key: str, base_url: str, workspace_id: str):
         self.api_key = api_key
@@ -60,8 +63,8 @@ class ClockifyService:
         params = {
             "get-week-before": week_start_iso ,   
             "hydrated": "true",
-            "page": 1,
-            "page-size": 5000
+            "page": DEFAULT_PAGE_NUMBER,
+            "page-size": MAX_PAGE_SIZE
         }
 
         return self._send_request(
