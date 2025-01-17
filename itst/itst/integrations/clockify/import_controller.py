@@ -47,24 +47,31 @@ def _calculate_times(entry: Dict) -> Dict[str, str]:
         "duration_hours": duration_hours
     }
 
-def process_clockify_entry_to_erpnext(
+def update_clockify_tag(
+    clockify_service: ClockifyService,
     entry: Dict,
-    employee_id: str,
-    employee_name: str,
+    clockify_tags_id: str 
+) -> None:
+    
+    clockify_update_data = {
+        "description": entry.get("description", "No description"),
+        "end": entry["timeInterval"]["end"],
+        "projectId": entry["projectId"],
+        "start": entry["timeInterval"]["start"],
+        "tagIds": [clockify_tags_id]
+    }
+    clockify_service.update_clockify_entry(entry["id"], clockify_update_data )
+    
+def build_timesheet_detail_data(
+    entry: Dict,
     dienstleistungs_artikel: str,
     activity_type: str,
-    timesheet_service: ERPNextTimesheetService,
-    clockify_service: ClockifyService,
-    clockify_tags_id: str
-) -> str:
-
-    project_name = entry["project"]["name"]
-    entry_id = entry["id"]
+) -> Dict:
 
     time_data = _calculate_times(entry)
 
-    timesheet_title = f"{employee_name}_{project_name}"
-    timesheet_name = timesheet_service.find_timesheet(timesheet_title)
+    project_name = entry["project"]["name"]
+    entry_id = entry["id"]
 
     billing_rate = entry["hourlyRate"]["amount"] / 100
     billing_amount = billing_rate * time_data["duration_hours"]
@@ -86,14 +93,34 @@ def process_clockify_entry_to_erpnext(
         "clockify_entry_id": entry_id
     }
 
-    clockify_update_data = {
-        "description": entry.get("description", "No description"),
-        "end": entry["timeInterval"]["end"],
-        "projectId": entry["projectId"],
-        "start": entry["timeInterval"]["start"],
-        "tagIds": [clockify_tags_id]
-    }
-    clockify_service.update_clockify_entry(entry["workspaceId"], entry_id, clockify_update_data )
+    return timesheet_detail_data
+
+def process_clockify_entry_to_erpnext(
+    entry: Dict,
+    employee_id: str,
+    employee_name: str,
+    activity_type: str,
+    clockify_tags_id: str,
+    dienstleistungs_artikel: str,
+    clockify_service: ClockifyService,
+    timesheet_service: ERPNextTimesheetService,
+) -> str:
+
+    project_name = entry["project"]["name"]
+    timesheet_title = f"{employee_name}_{project_name}"
+    timesheet_name = timesheet_service.find_timesheet(timesheet_title)
+
+    timesheet_detail_data = build_timesheet_detail_data(
+        entry,
+        dienstleistungs_artikel,
+        activity_type,
+    )
+
+    update_clockify_tag(
+        clockify_service,
+        entry,
+        clockify_tags_id 
+    )
 
     if timesheet_name:
         timesheet_service.add_detail_to_timesheet(timesheet_name, timesheet_detail_data)
@@ -107,20 +134,19 @@ def process_clockify_entry_to_erpnext(
     return timesheet_name
 
 def import_clockify_entries_to_timesheet(
-    clockify_service: ClockifyService,
     timesheet_service: ERPNextTimesheetService,
-    workspace_id: str,
-    clockify_user_id: str,
-    employee_id: str,
-    employee_name: str,
-    clockify_tags_id: str,
+    clockify_service: ClockifyService,
     dienstleistungs_artikel: str,
-    activity_type: str
+    clockify_user_id: str,
+    clockify_tags_id: str,
+    employee_name: str,
+    activity_type: str,
+    employee_id: str,
 ):
 
     week_start_iso = get_week_start_iso()
 
-    entries = clockify_service.fetch_clockify_entries(workspace_id, clockify_user_id, week_start_iso)
+    entries = clockify_service.fetch_clockify_entries(clockify_user_id, week_start_iso)
     if not entries:
         frappe.msgprint("Keine Einträge gefunden.")
         return
@@ -146,11 +172,11 @@ def import_clockify_entries_to_timesheet(
                 entry,
                 employee_id,
                 employee_name,
-                dienstleistungs_artikel,
                 activity_type,
-                timesheet_service,
+                clockify_tags_id,
+                dienstleistungs_artikel,
                 clockify_service,
-                clockify_tags_id
+                timesheet_service,
             )
             if result is not None:
                 imported_entries_count += 1

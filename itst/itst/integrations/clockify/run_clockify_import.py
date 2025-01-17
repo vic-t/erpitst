@@ -6,7 +6,7 @@ from .import_controller import import_clockify_entries_to_timesheet
 @frappe.whitelist()
 def run_clockify_import(user_mapping_name, dienstleistungs_artikel, activity_type):
     clockify_import_settings = frappe.get_doc("Clockify Import Settings")
-    workspace_id = clockify_import_settings.workspace_id
+    clockify_workspace_id = clockify_import_settings.workspace_id
 
     selected_mapping = None
     for user in clockify_import_settings.user_mapping:
@@ -25,19 +25,19 @@ def run_clockify_import(user_mapping_name, dienstleistungs_artikel, activity_typ
 
     clockify_service = ClockifyService(
         api_key=clockify_api_key,
-        base_url=clockify_base_url
+        base_url=clockify_base_url, 
+        workspace_id=clockify_workspace_id
     )
 
     timesheet_service = ERPNextTimesheetService(company="ITST")
 
     import_clockify_entries_to_timesheet(
-        clockify_service,
         timesheet_service,
-        workspace_id,
+        clockify_service,
+        dienstleistungs_artikel,        
         clockify_user_id,
-        erpnext_employee_id,
-        erpnext_employee_name,
         clockify_tags_id,
-        dienstleistungs_artikel,
-        activity_type
+        erpnext_employee_name,
+        activity_type,        
+        erpnext_employee_id,     
     )

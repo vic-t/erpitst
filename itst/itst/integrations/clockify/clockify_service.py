@@ -31,7 +31,7 @@ class ClockifyService:
 
         api_url = f"{self.base_url}{endpoint}"
 
-        response = response.request(
+        response = requests.request(
             method=method,
             url=api_url,
             headers=merged_headers,
