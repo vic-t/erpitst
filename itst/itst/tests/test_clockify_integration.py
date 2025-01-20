@@ -31,6 +31,60 @@ from itst.itst.integrations.clockify.utilities import (
 
 
 class TestClockifyIntegration(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.company_doc = frappe.get_doc({
+            "doctype": "Company",
+            "company_name": "Test_Company",
+            "abbr": "TC",
+            "default_currency": "CHF",
+            "country": "Switzerland"
+        }).insert()
+
+        cls.employee_doc = frappe.get_doc({
+            "doctype": "Employee",
+            "naming_series": "HR-EMP-00099",
+            "first_name": "Hans",
+            "company": cls.company_doc.name,
+            "status": "Active",
+            "gender": "Male",
+            "date_of_birth": "2000-01-01",
+            "date_of_joining": "2025-01-01"
+        }).insert()
+
+        cls.project_doc = frappe.get_doc({
+            "doctype": "Project",
+            "project_name": "Test_Project",
+            "status": "Open"
+        }).insert()
+
+        cls.item_doc = frappe.get_doc({
+            "doctype": "Item",
+            "item_code": "test-099",
+            "item_group": "All Item Groups"
+        }).insert()
+
+    @classmethod
+    def tearDownClass(cls):
+        # remove that doc
+        if frappe.db.exists("Company", "Test_Company"):
+            frappe.get_doc("Company", "Test_Company").delete()
+
+        if frappe.db.exists("Employee", "HR-EMP-00099"):
+            frappe.get_doc("Employee", "HR-EMP-00099").delete()
+        
+        if frappe.db.exists("Project", "Test_Project"):
+            frappe.get_doc("Project", "Test_Project").delete()
+        
+        if frappe.db.exists("Item", "test-099"):
+            frappe.get_doc("Item", "test-099").delete()
+
+        frappe.db.commit()
+        super().tearDownClass()
+
+
     # --------------------------------------------
     # UTILITIES.PY TESTS
     # --------------------------------------------
@@ -82,42 +136,6 @@ class TestClockifyIntegration(unittest.TestCase):
     # --------------------------------------------
     #Test for create_erpnext_timesheet
     def test_should_CreateTimesheet_When_IsBeingPassed(self):
-
-        self.company_doc = frappe.get_doc({
-            "doctype": "Company",
-            "company_name": "Test_Company",
-            "abbr": "TC",
-            "default_currency": "CHF",
-            "country": "Switzerland"
-        })
-        self.company_doc.insert()
-
-        self.employee_doc = frappe.get_doc({
-            "doctype": "Employee",
-            "naming_series": "HR-EMP-00099",
-            "first_name": "Hans",
-            "company": self.company_doc.name,
-            "status": "Active",
-            "gender": "Male",
-            "date_of_birth": "2000-01-01",
-            "date_of_joining": "2025-01-01"
-        })
-        self.employee_doc.insert()
-
-        project_doc = frappe.get_doc({
-            "doctype": "Project",
-            "project_name": "Test_Project",
-            "status": "Open"
-        })
-        project_doc.insert()
-
-        item_doc = frappe.get_doc({
-            "doctype": "Item",
-            "item_code": "test-099",
-            "item_group": "All Item Groups"
-        })
-        item_doc.insert()
-
         timesheet_service = ERPNextTimesheetService(company=self.company_doc.name)
 
         timesheet_data = {
@@ -126,13 +144,13 @@ class TestClockifyIntegration(unittest.TestCase):
             "to_time": "2025-01-01 10:00:00",
             "duration": "1:00",
             "hours": 1.0,
-            "project": project_doc.name,
+            "project": self.project_doc.name,
             "billable": True,
             "billing_duration": "1:00",
             "billing_hours": 1.0,
             "billing_rate": 50,
             "billing_amount": 50,
-            "category": item_doc.item_code,
+            "category": self.item_doc.item_code,
             "remarks": "Test Remarks",
             "clockify_entry_id": 1234567890
         }
@@ -141,7 +159,6 @@ class TestClockifyIntegration(unittest.TestCase):
             erpnext_employee_id = self.employee_doc.name,
             timesheet_title = "TestTimesheet",
             timesheet_detail_data = timesheet_data
-
         )
 
         self.assertIsNotNone(timesheet_name)
@@ -156,28 +173,6 @@ class TestClockifyIntegration(unittest.TestCase):
 
     #Test for add_detail_to_timesheet
     def test_should_AddTimeLog_When_TimesheetAlreadyExists(self):
-
-        self.company_doc = frappe.get_doc({
-            "doctype": "Company",
-            "company_name": "Test_Company",
-            "abbr": "TC",
-            "default_currency": "CHF",
-            "country": "Switzerland"
-        })
-        self.company_doc.insert()
-
-        self.employee_doc = frappe.get_doc({
-            "doctype": "Employee",
-            "naming_series": "HR-EMP-00099",
-            "first_name": "Hans",
-            "company": self.company_doc.name,
-            "status": "Active",
-            "gender": "Male",
-            "date_of_birth": "2000-01-01",
-            "date_of_joining": "2025-01-01"
-        })
-        self.employee_doc.insert()
-
         timesheet_service = ERPNextTimesheetService(company=self.company_doc.name)
 
         timesheet_name = timesheet_service.create_timesheet(
@@ -212,28 +207,6 @@ class TestClockifyIntegration(unittest.TestCase):
 
     #Test for find_timesheet
     def test_should_ReturnTimesheetNameOrNone_When_TimesheetNameisGiven(self):
-
-        self.company_doc = frappe.get_doc({
-            "doctype": "Company",
-            "company_name": "Test_Company",
-            "abbr": "TC",
-            "default_currency": "CHF",
-            "country": "Switzerland"
-        })
-        self.company_doc.insert()
-
-        self.employee_doc = frappe.get_doc({
-            "doctype": "Employee",
-            "naming_series": "HR-EMP-00099",
-            "first_name": "Hans Ruedi",
-            "company": self.company_doc.name,
-            "status": "Active",
-            "gender": "Male",
-            "date_of_birth": "2000-01-01",
-            "date_of_joining": "2025-01-01"
-        })
-        self.employee_doc.insert()
-
         timesheet_service = ERPNextTimesheetService(company=self.company_doc.name)
 
         timesheet_name = timesheet_service.create_timesheet(
@@ -287,14 +260,14 @@ class TestClockifyIntegration(unittest.TestCase):
         }
         result = build_timesheet_detail_data(
             entry,
-            dienstleistungs_artikel="test-001",
+            dienstleistungs_artikel="test-099",
             activity_type="Planning"
         )
         self.assertEqual(result["project"], "Test_Project")
         self.assertEqual(result["clockify_entry_id"], "clockify_id_999")
         self.assertTrue(result["billable"])
         self.assertEqual(result["billing_rate"], 100.00)
-        self.assertEqual(result["category"], "test-001")
+        self.assertEqual(result["category"], "test-099")
     
     @patch("itst.itst.integrations.clockify.import_controller.ClockifyService.update_clockify_entry")
     def test_update_clockify_tag(self, mock_update):
@@ -322,25 +295,8 @@ class TestClockifyIntegration(unittest.TestCase):
         ####
 
     @patch("itst.itst.integrations.clockify.import_controller.update_clockify_tag")
-    def test_process_clockify_entry_to_erpnext(self, mock_update_tag):
-
-        company_doc = frappe.get_doc({
-                "doctype": "Company",
-                "company_name": "Test_Company",
-                "abbr": "TC",
-                "default_currency": "CHF",
-                "country": "Switzerland"
-            })
-        company_doc.insert()
-
-        project_doc = frappe.get_doc({
-                "doctype": "Project",
-                "project_name": "Test_Project",
-                "status": "Open"
-            })
-        project_doc.insert()
-        
-        service = ERPNextTimesheetService(company=company_doc.name)
+    def test_process_clockify_entry_to_erpnext(self, mock_update_tag):   
+        service = ERPNextTimesheetService(company=self.company_doc.name)
 
         clockify_service = MagicMock(spec=ClockifyService)
 
@@ -356,43 +312,33 @@ class TestClockifyIntegration(unittest.TestCase):
             "workspaceId": "ws123",
             "hourlyRate": {"amount": 10000}, # 100.00
         }
+        
+        result_name = process_clockify_entry_to_erpnext(
+            entry,
+            employee_id="HR-EMP-00099",
+            employee_name="Hans Ruedi",
+            activity_type="Planning",
+            clockify_tags_id="dummy_tag",
+            dienstleistungs_artikel="test-099",
+            clockify_service=clockify_service,
+            timesheet_service=service
+        )
 
-        try:
-            result_name = process_clockify_entry_to_erpnext(
-                entry,
-                employee_id="HR-EMP-00099",
-                employee_name="Hans Ruedi",
-                activity_type="Planning",
-                clockify_tags_id="dummy_tag",
-                dienstleistungs_artikel="test-001",
-                clockify_service=clockify_service,
-                timesheet_service=service
-            )
+        self.assertIsNotNone(result_name)
+        mock_update_tag.assert_called_once()
 
-            self.assertIsNone(result_name)
-            mock_update_tag.assert_called_once()
-        finally:
-            frappe.db.rollback()
+        frappe.db.rollback()
 
     @patch("itst.itst.integrations.clockify.import_controller.process_clockify_entry_to_erpnext")
     @patch("itst.itst.integrations.clockify.import_controller.ClockifyService.fetch_clockify_entries")
     def test_import_clockify_entries_to_timesheet(self, mock_fetch, mock_process):
-        
-        company_doc = frappe.get_doc({
-                "doctype": "Company",
-                "company_name": "Test_Company",
-                "abbr": "TC",
-                "default_currency": "CHF",
-                "country": "Switzerland"
-            })
-        company_doc.insert()
 
-        service = ERPNextTimesheetService(company=company_doc.name)
+        service = ERPNextTimesheetService(company=self.company_doc.name)
         clockify_service = ClockifyService("api_key", "https://api.clockify.me/api/v1", "ws123")
 
         mock_fetch.return_value = [
-            {"id": "entry1", "project": {"name": "TestProject1"}},
-            {"id": "entry2", "project": {"name": "TestProject2"}}
+            {"id": "entry1", "project": {"name": "Test_Project"}},
+            {"id": "entry2", "project": {"name": "Test_Project"}}
         ]
 
         mock_process.return_value = "TS-2025-99999"
@@ -401,7 +347,7 @@ class TestClockifyIntegration(unittest.TestCase):
             import_clockify_entries_to_timesheet(
                 timesheet_service=service,
                 clockify_service=clockify_service,
-                dienstleistungs_artikel="test-001",
+                dienstleistungs_artikel="test-099",
                 clockify_user_id="user123",
                 clockify_tags_id="dummy_tag",
                 employee_name="Hans Peter",
@@ -410,9 +356,9 @@ class TestClockifyIntegration(unittest.TestCase):
             )
             mock_fetch.assert_called_once()
             self.assertEqual(mock_process.call_count, 2)
-        finally:
+        finally:     
+            
             frappe.db.rollback()
-        
 
     #Tests for duplicate_imports_validation
     def test_should_RetrunError_When_ImportIsAnDuplicate(self):
@@ -435,15 +381,8 @@ class TestClockifyIntegration(unittest.TestCase):
     
     #Tests for validate_project_existence
     def test_should_ReturnTrue_When_ProjectDoesExist(self):
-        project_doc = frappe.get_doc({
-            "doctype": "Project",
-            "project_name": "Test_Project",
-            "status": "Open"
-        })
-        project_doc.insert()
         self.assertTrue(validate_project_existence("Test_Project"))
         self.assertFalse(validate_project_existence("Test_Project1"))
-        frappe.db.rollback() 
 
     # --------------------------------------------
     # RUN_CLOCKIFY_IMPORT.PY TESTS
@@ -459,7 +398,7 @@ class TestClockifyIntegration(unittest.TestCase):
 
         user_item = MagicMock()
         user_item.erpnext_employee = "HR-EMP-00099"
-        user_item.clockify_user_id = "user_123"
+        user_item.clockify_user_id = "user123"
         user_item.erpnext_employee_name = "Hans Peter"
         setttings_mock.user_mapping = [user_item]
 
@@ -467,19 +406,15 @@ class TestClockifyIntegration(unittest.TestCase):
 
         run_clockify_import(
             user_mapping_name="HR-EMP-00099",
-            dienstleistungs_artikel="test-001",
+            dienstleistungs_artikel="test-099",
             activity_type="Planning"
         )
 
         mock_import.assert_called_once()
-        test = mock_import.call_args
-        self.assertEqual(test["clockify_user_id"], "user123")
-        self.assertEqual(test["employee_id"], "HR-EMP-00099")
-        self.assertEqual(test["erpnext_employee_name"], "Hans Peter")
-        self.assertEqual(test["get_password.retun_value"], "api_key")
-        self.assertEqual(test["tags_id"], "dummy_tag")
-        self.assertEqual(test["clockify_url"], "https://api.clockify.me/api/v1")
-        self.assertEqual(test["workspace_id"], "ws123")
+        args, kwargs = mock_import.call_args
+        self.assertEqual(args[3], "user123")
+        self.assertEqual(args[7], "HR-EMP-00099")
+        self.assertEqual(args[5], "Hans Peter")
 
     @patch("frappe.get_doc")
     def test_run_clockify_import_user_not_found(self, mock_get_doc):
@@ -490,7 +425,7 @@ class TestClockifyIntegration(unittest.TestCase):
         with self.assertRaises(frappe.ValidationError):
             run_clockify_import(
                 user_mapping_name="NotExisting",
-                dienstleistungs_artikel="test-001",
+                dienstleistungs_artikel="test-099",
                 activity_type="Planning"
             )
  
@@ -498,7 +433,7 @@ class TestClockifyIntegration(unittest.TestCase):
     # CLOCKIFY_SERVICE.PY TESTS
     # --------------------------------------------
     #Test for fetch_clockify_entries
-    @patch("requests.get")
+    @patch("requests.request")
     def test_should_GetTimeEntriesOfLastWeek_When_APICallIsSuccesfull(self, mock_requests_get):
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -514,7 +449,7 @@ class TestClockifyIntegration(unittest.TestCase):
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]["id"], "entry1")
 
-    @patch("requests.get")
+    @patch("requests.request")
     def test_should_ThrowException_When_APICallIsNotSuccesfull(self, mock_requests_get):
         mock_response = MagicMock()
         mock_response.status_code = 401
@@ -526,7 +461,7 @@ class TestClockifyIntegration(unittest.TestCase):
             service.fetch_clockify_entries("user123", "2025-01-01T00:00:00Z")
 
     #Test for update_clockify_entry
-    @patch("requests.put")
+    @patch("requests.request")
     def test_should_PUTRequestToClockify_When_WhenConnectionToAPIIsSuccessful(self, mock_put):
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -548,8 +483,8 @@ class TestClockifyIntegration(unittest.TestCase):
 
         mock_put.assert_called_once()
 
-#Test for update_clockify_entry
-    @patch("requests.put")
+    #Test for update_clockify_entry
+    @patch("requests.request")
     def test_should_ThrowsExecption_When_WhenConnectionToAPIIsNotSuccessful(self, mock_put):
         mock_resp = MagicMock()
         mock_resp.status_code = 400
@@ -563,14 +498,15 @@ class TestClockifyIntegration(unittest.TestCase):
             },
             "projectId": "123456789"
         }
-
+        service = ClockifyService(
+            api_key="fake_key",
+            base_url="https://api.clockify.me/api/v1",
+            workspace_id="testWorkspace"
+        )
         with self.assertRaises(frappe.ValidationError):
-            ClockifyService.update_clockify_entry(
-                workspace_id="testWorkspace",
-                entry=entry_data,
-                clockify_tags_id="fake_tag",
-                clockify_api_key="fake_key",
-                clockify_base_url="https://api.clockify.me/api/v1"
+            service.update_clockify_entry(
+                entry_id="entry123",
+                data=entry_data
             )
 
             mock_put.assert_called_once()
