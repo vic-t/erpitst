@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timezone, timedelta
 import pytz
 
-def fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url):
+def fetch_clockify_entries_for_week(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url):
     week_start_iso  = get_import_time()
     endpoint_url = f"{clockify_base_url}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": clockify_api_key}
@@ -152,7 +152,7 @@ def build_html_link(url,text):
 """
 
 def import_clockify_entries_to_timesheet (workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name, clockify_api_key, clockify_base_url, clockify_tags_id, dienstleistungs_artikel, activity_type):
-    entries = fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url)
+    entries = fetch_clockify_entries_for_week(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url)
     if not entries:
         frappe.msgprint("Keine Einträge gefunden.")
         return
