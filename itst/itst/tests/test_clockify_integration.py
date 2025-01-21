@@ -66,6 +66,23 @@ class TestClockifyIntegration(unittest.TestCase):
             "item_group": "All Item Groups"
         }).insert()
 
+    @classmethod
+    def tearDownClass(cls):
+        # remove that doc
+        if frappe.db.exists("Company", "Test_Company"):
+            frappe.get_doc("Company", "Test_Company").delete()
+            
+        if frappe.db.exists("Employee", "HR-EMP-00099"):
+            frappe.get_doc("Employee", "HR-EMP-00099").delete()
+        
+        if frappe.db.exists("Project", "Test_Project"):
+            frappe.get_doc("Project", "Test_Project").delete()
+        
+        if frappe.db.exists("Item", "test-099"):
+            frappe.get_doc("Item", "test-099").delete()
+        frappe.db.commit()
+        super().tearDownClass()
+
     # --------------------------------------------
     # UTILITIES.PY TESTS
     # --------------------------------------------
@@ -131,7 +148,7 @@ class TestClockifyIntegration(unittest.TestCase):
             "billing_hours": 1.0,
             "billing_rate": 50,
             "billing_amount": 50,
-            "category": self.item_doc.item_code,
+            "category": self.item_doc.name,
             "remarks": "Test Remarks",
             "clockify_entry_id": 1234567890
         }
@@ -360,6 +377,7 @@ class TestClockifyIntegration(unittest.TestCase):
     
     #Tests for validate_project_existence
     def test_shouldReturnTrue_whenProjectExists(self):
+        #Look at method "validate_project_existence", and code to understand why.
         self.assertTrue(validate_project_existence("Test_Project"))
         self.assertFalse(validate_project_existence("Test_Project1"))
 
@@ -489,20 +507,3 @@ class TestClockifyIntegration(unittest.TestCase):
             )
 
             mock_put.assert_called_once()
-
-    @classmethod
-    def tearDownClass(cls):
-        if frappe.db.exists("Company", "Test_Company"):
-            frappe.get_doc("Company", "Test_Company").delete()
-
-        if frappe.db.exists("Employee", "HR-EMP-00099"):
-            frappe.get_doc("Employee", "HR-EMP-00099").delete()
-        
-        if frappe.db.exists("Project", "Test_Project"):
-            frappe.get_doc("Project", "Test_Project").delete()
-        
-        if frappe.db.exists("Item", "test-099"):
-            frappe.get_doc("Item", "test-099").delete()
-
-        frappe.db.commit()
-        super().tearDownClass()
