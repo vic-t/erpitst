@@ -31,58 +31,6 @@ from itst.itst.integrations.clockify.utilities import (
 
 
 class TestClockifyIntegration(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.company_doc = frappe.get_doc({
-            "doctype": "Company",
-            "company_name": "Test_Company",
-            "abbr": "TC",
-            "default_currency": "CHF",
-            "country": "Switzerland"
-        }).insert()
-
-        cls.employee_doc = frappe.get_doc({
-            "doctype": "Employee",
-            "naming_series": "HR-EMP-00099",
-            "first_name": "Hans",
-            "company": cls.company_doc.name,
-            "status": "Active",
-            "gender": "Male",
-            "date_of_birth": "2000-01-01",
-            "date_of_joining": "2025-01-01"
-        }).insert()
-
-        cls.project_doc = frappe.get_doc({
-            "doctype": "Project",
-            "project_name": "Test_Project",
-            "status": "Open"
-        }).insert()
-
-        cls.item_doc = frappe.get_doc({
-            "doctype": "Item",
-            "item_code": "test-099",
-            "item_group": "All Item Groups"
-        }).insert()
-
-    @classmethod
-    def tearDownClass(cls):
-        # remove that doc
-        if frappe.db.exists("Company", "Test_Company"):
-            frappe.get_doc("Company", "Test_Company").delete()
-            
-        if frappe.db.exists("Employee", "HR-EMP-00099"):
-            frappe.get_doc("Employee", "HR-EMP-00099").delete()
-        
-        if frappe.db.exists("Project", "Test_Project"):
-            frappe.get_doc("Project", "Test_Project").delete()
-        
-        if frappe.db.exists("Item", "test-099"):
-            frappe.get_doc("Item", "test-099").delete()
-        frappe.db.commit()
-        super().tearDownClass()
-
     # --------------------------------------------
     # UTILITIES.PY TESTS
     # --------------------------------------------
@@ -134,6 +82,37 @@ class TestClockifyIntegration(unittest.TestCase):
     # --------------------------------------------
     #Test for create_erpnext_timesheet
     def test_shouldCreateTimesheet_whenValidDataPassed(self):
+        self.company_doc = frappe.get_doc({
+            "doctype": "Company",
+            "company_name": "Test_Company",
+            "abbr": "TC",
+            "default_currency": "CHF",
+            "country": "Switzerland"
+        }).insert()
+
+        self.employee_doc = frappe.get_doc({
+            "doctype": "Employee",
+            "naming_series": "HR-EMP-00099",
+            "first_name": "Hans",
+            "company": self.company_doc.name,
+            "status": "Active",
+            "gender": "Male",
+            "date_of_birth": "2000-01-01",
+            "date_of_joining": "2025-01-01"
+        }).insert()
+
+        self.project_doc = frappe.get_doc({
+            "doctype": "Project",
+            "project_name": "Test_Project",
+            "status": "Open"
+        }).insert()
+
+        self.item_doc = frappe.get_doc({
+            "doctype": "Item",
+            "item_code": "test-099",
+            "item_group": "All Item Groups"
+        }).insert()
+
         timesheet_service = ERPNextTimesheetService(company=self.company_doc.name)
 
         timesheet_data = {
@@ -155,7 +134,7 @@ class TestClockifyIntegration(unittest.TestCase):
 
         timesheet_name = timesheet_service.create_timesheet(
             erpnext_employee_id = self.employee_doc.name,
-            timesheet_title = "TestTimesheet",
+            timesheet_title = "TestTimesheet123",
             timesheet_detail_data = timesheet_data
         )
 
@@ -163,14 +142,50 @@ class TestClockifyIntegration(unittest.TestCase):
 
         doc = frappe.get_doc("Timesheet", timesheet_name)
         self.assertEqual(doc.employee, self.employee_doc.name)
-        self.assertEqual(doc.title, "TestTimesheet")
+        self.assertEqual(doc.title, "TestTimesheet123")
         self.assertEqual(len(doc.time_logs), 1)
         self.assertEqual(doc.time_logs[0].clockify_entry_id, '1234567890')
+
+        if frappe.db.exists("Timesheet", timesheet_name):
+            frappe.get_doc("Timesheet", timesheet_name).delete()
+            
+        if frappe.db.exists("Company", "Test_Company"):
+            frappe.get_doc("Company", "Test_Company").delete()
+  
+        if frappe.db.exists("Employee", "HR-EMP-00099"):
+            frappe.get_doc("Employee", "HR-EMP-00099").delete()
+        
+        if frappe.db.exists("Project", "Test_Project"):
+            frappe.get_doc("Project", "Test_Project").delete()
+        
+        if frappe.db.exists("Item", "test-099"):
+            frappe.get_doc("Item", "test-099").delete()
+
+        frappe.db.commit()
 
         frappe.db.rollback()
 
     #Test for add_detail_to_timesheet
     def test_shouldAddTimeLog_whenTimesheetAlreadyExists(self):
+        self.company_doc = frappe.get_doc({
+            "doctype": "Company",
+            "company_name": "Test_Company",
+            "abbr": "TC",
+            "default_currency": "CHF",
+            "country": "Switzerland"
+        }).insert()
+
+        self.employee_doc = frappe.get_doc({
+            "doctype": "Employee",
+            "naming_series": "HR-EMP-00099",
+            "first_name": "Hans",
+            "company": self.company_doc.name,
+            "status": "Active",
+            "gender": "Male",
+            "date_of_birth": "2000-01-01",
+            "date_of_joining": "2025-01-01"
+        }).insert()
+
         timesheet_service = ERPNextTimesheetService(company=self.company_doc.name)
 
         timesheet_name = timesheet_service.create_timesheet(
@@ -201,10 +216,38 @@ class TestClockifyIntegration(unittest.TestCase):
         self.assertEqual(len(doc_after.time_logs), 2)
         self.assertEqual(doc_after.time_logs[1].clockify_entry_id, "9876543210")
 
+        if frappe.db.exists("Timesheet", timesheet_name):
+            frappe.get_doc("Timesheet", timesheet_name).delete()
+
+        if frappe.db.exists("Company", "Test_Company"):
+            frappe.get_doc("Company", "Test_Company").delete()
+
+        if frappe.db.exists("Employee", "HR-EMP-00099"):
+            frappe.get_doc("Employee", "HR-EMP-00099").delete()
+
         frappe.db.rollback()
 
     #Test for find_timesheet
     def test_shouldReturnTimesheetNameOrNone_whenTitleIsGiven(self):
+        self.company_doc = frappe.get_doc({
+            "doctype": "Company",
+            "company_name": "Test_Company",
+            "abbr": "TC",
+            "default_currency": "CHF",
+            "country": "Switzerland"
+        }).insert()
+
+        self.employee_doc = frappe.get_doc({
+            "doctype": "Employee",
+            "naming_series": "HR-EMP-00099",
+            "first_name": "Hans",
+            "company": self.company_doc.name,
+            "status": "Active",
+            "gender": "Male",
+            "date_of_birth": "2000-01-01",
+            "date_of_joining": "2025-01-01"
+        }).insert()
+
         timesheet_service = ERPNextTimesheetService(company=self.company_doc.name)
 
         timesheet_name = timesheet_service.create_timesheet(
@@ -226,6 +269,15 @@ class TestClockifyIntegration(unittest.TestCase):
         # should be None
         self.assertIsNone(timesheet_service.find_timesheet("NonExistentTimesheet"))
 
+        if frappe.db.exists("Timesheet", timesheet_name):
+            frappe.get_doc("Timesheet", timesheet_name).delete()
+
+        if frappe.db.exists("Company", "Test_Company"):
+            frappe.get_doc("Company", "Test_Company").delete()
+
+        if frappe.db.exists("Employee", "HR-EMP-00099"):
+            frappe.get_doc("Employee", "HR-EMP-00099").delete()
+        frappe.db.commit()
         frappe.db.rollback()
 
     # --------------------------------------------
@@ -242,6 +294,18 @@ class TestClockifyIntegration(unittest.TestCase):
         self.assertEqual(result["duration_hours"], 1.5)
 
     def test_shouldBuildTimesheetDetailData_whenClockifyEntryIsProvided(self):
+        self.project_doc = frappe.get_doc({
+            "doctype": "Project",
+            "project_name": "Test_Project",
+            "status": "Open"
+        }).insert()
+
+        self.item_doc = frappe.get_doc({
+            "doctype": "Item",
+            "item_code": "test-099",
+            "item_group": "All Item Groups"
+        }).insert()
+
         entry = {
             "timeInterval": {
                 "start": "2025-01-01T08:00:00Z",
@@ -264,6 +328,16 @@ class TestClockifyIntegration(unittest.TestCase):
         self.assertTrue(result["billable"])
         self.assertEqual(result["billing_rate"], 100.00)
         self.assertEqual(result["category"], "test-099")
+
+        if frappe.db.exists("Project", "Test_Project"):
+            frappe.get_doc("Project", "Test_Project").delete()
+        
+        if frappe.db.exists("Item", "test-099"):
+            frappe.get_doc("Item", "test-099").delete()
+
+        frappe.db.commit()
+
+        frappe.db.rollback()
     
     @patch("itst.itst.integrations.clockify.import_controller.ClockifyService.update_clockify_entry")
     def test_shouldUpdateClockifyTag_whenGivenClockifyEntryAndTag(self, mock_update):
@@ -291,7 +365,38 @@ class TestClockifyIntegration(unittest.TestCase):
         ####
 
     @patch("itst.itst.integrations.clockify.import_controller.update_clockify_tag")
-    def test_shouldProcessClockifyEntry_whenGivenValidData(self, mock_update_tag):   
+    def test_shouldProcessClockifyEntry_whenGivenValidData(self, mock_update_tag):
+        self.company_doc = frappe.get_doc({
+            "doctype": "Company",
+            "company_name": "Test_Company",
+            "abbr": "TC",
+            "default_currency": "CHF",
+            "country": "Switzerland"
+        }).insert()
+
+        self.employee_doc = frappe.get_doc({
+            "doctype": "Employee",
+            "naming_series": "HR-EMP-00099",
+            "first_name": "Hans",
+            "company": self.company_doc.name,
+            "status": "Active",
+            "gender": "Male",
+            "date_of_birth": "2000-01-01",
+            "date_of_joining": "2025-01-01"
+        }).insert()
+
+        self.project_doc = frappe.get_doc({
+            "doctype": "Project",
+            "project_name": "Test_Project",
+            "status": "Open"
+        }).insert()
+
+        self.item_doc = frappe.get_doc({
+            "doctype": "Item",
+            "item_code": "test-099",
+            "item_group": "All Item Groups"
+        }).insert()
+
         service = ERPNextTimesheetService(company=self.company_doc.name)
 
         clockify_service = MagicMock(spec=ClockifyService)
@@ -312,7 +417,7 @@ class TestClockifyIntegration(unittest.TestCase):
         result_name = process_clockify_entry_to_erpnext(
             entry,
             employee_id="HR-EMP-00099",
-            employee_name="Hans Ruedi",
+            employee_name="Hans",
             activity_type="Planning",
             clockify_tags_id="dummy_tag",
             dienstleistungs_artikel="test-099",
@@ -323,11 +428,58 @@ class TestClockifyIntegration(unittest.TestCase):
         self.assertIsNotNone(result_name)
         mock_update_tag.assert_called_once()
 
+        if frappe.db.exists("Timesheet", result_name):
+            frappe.get_doc("Timesheet", result_name).delete()
+
+        if frappe.db.exists("Company", "Test_Company"):
+            frappe.get_doc("Company", "Test_Company").delete()
+            
+        if frappe.db.exists("Employee", "HR-EMP-00099"):
+            frappe.get_doc("Employee", "HR-EMP-00099").delete()
+        
+        if frappe.db.exists("Project", "Test_Project"):
+            frappe.get_doc("Project", "Test_Project").delete()
+        
+        if frappe.db.exists("Item", "test-099"):
+            frappe.get_doc("Item", "test-099").delete()
+
+        frappe.db.commit()
         frappe.db.rollback()
 
     @patch("itst.itst.integrations.clockify.import_controller.process_clockify_entry_to_erpnext")
     @patch("itst.itst.integrations.clockify.import_controller.ClockifyService.fetch_clockify_entries")
     def test_shouldImportClockifyEntries_whenEntriesAreFetched(self, mock_fetch, mock_process):
+
+        self.company_doc = frappe.get_doc({
+            "doctype": "Company",
+            "company_name": "Test_Company",
+            "abbr": "TC",
+            "default_currency": "CHF",
+            "country": "Switzerland"
+        }).insert()
+
+        self.employee_doc = frappe.get_doc({
+            "doctype": "Employee",
+            "naming_series": "HR-EMP-00099",
+            "first_name": "Hans",
+            "company": self.company_doc.name,
+            "status": "Active",
+            "gender": "Male",
+            "date_of_birth": "2000-01-01",
+            "date_of_joining": "2025-01-01"
+        }).insert()
+
+        self.project_doc = frappe.get_doc({
+            "doctype": "Project",
+            "project_name": "Test_Project",
+            "status": "Open"
+        }).insert()
+
+        self.item_doc = frappe.get_doc({
+            "doctype": "Item",
+            "item_code": "test-099",
+            "item_group": "All Item Groups"
+        }).insert()
 
         service = ERPNextTimesheetService(company=self.company_doc.name)
         clockify_service = ClockifyService("api_key", "https://api.clockify.me/api/v1", "ws123")
@@ -353,7 +505,20 @@ class TestClockifyIntegration(unittest.TestCase):
             mock_fetch.assert_called_once()
             self.assertEqual(mock_process.call_count, 2)
         finally:     
+
+            if frappe.db.exists("Company", "Test_Company"):
+                frappe.get_doc("Company", "Test_Company").delete()
+                
+            if frappe.db.exists("Employee", "HR-EMP-00099"):
+                frappe.get_doc("Employee", "HR-EMP-00099").delete()
             
+            if frappe.db.exists("Project", "Test_Project"):
+                frappe.get_doc("Project", "Test_Project").delete()
+            
+            if frappe.db.exists("Item", "test-099"):
+                frappe.get_doc("Item", "test-099").delete()
+
+            frappe.db.commit()
             frappe.db.rollback()
 
     #Tests for duplicate_imports_validation
@@ -363,6 +528,7 @@ class TestClockifyIntegration(unittest.TestCase):
             "time_logs": [
                 {
                     "doctype": "Timesheet Detail",
+                    "title": "TestTimsheetDuplicate",
                     "clockify_entry_id": 1234567890
                 }
             ],
@@ -373,13 +539,25 @@ class TestClockifyIntegration(unittest.TestCase):
             duplicate_imports_validation(1234567890)
 
         self.assertIsNone(duplicate_imports_validation(9876543210))
+        if frappe.db.exists("Timesheet", "TestTimsheetDuplicate"):
+            frappe.get_doc("Timesheet", "TestTimsheetDuplicate").delete()
         frappe.db.rollback()
     
     #Tests for validate_project_existence
     def test_shouldReturnTrue_whenProjectExists(self):
+
+        self.project_doc = frappe.get_doc({
+            "doctype": "Project",
+            "project_name": "Test_Project",
+            "status": "Open"
+        }).insert()
+
         #Look at method "validate_project_existence", and code to understand why.
         self.assertTrue(validate_project_existence("Test_Project"))
         self.assertFalse(validate_project_existence("Test_Project1"))
+
+        if frappe.db.exists("Project", "Test_Project"):
+            frappe.get_doc("Project", "Test_Project").delete()
 
     # --------------------------------------------
     # RUN_CLOCKIFY_IMPORT.PY TESTS
@@ -387,6 +565,31 @@ class TestClockifyIntegration(unittest.TestCase):
     @patch("itst.itst.integrations.clockify.run_clockify_import.import_clockify_entries_to_timesheet")
     @patch("frappe.get_doc")
     def test_shouldRunClockifyImport_whenUserMappingFound(self, mock_get_doc, mock_import):
+        self.company_doc = frappe.get_doc({
+            "doctype": "Company",
+            "company_name": "Test_Company",
+            "abbr": "TC",
+            "default_currency": "CHF",
+            "country": "Switzerland"
+        }).insert()
+
+        self.employee_doc = frappe.get_doc({
+            "doctype": "Employee",
+            "naming_series": "HR-EMP-00099",
+            "first_name": "Hans",
+            "company": self.company_doc.name,
+            "status": "Active",
+            "gender": "Male",
+            "date_of_birth": "2000-01-01",
+            "date_of_joining": "2025-01-01"
+        }).insert()
+
+        self.item_doc = frappe.get_doc({
+            "doctype": "Item",
+            "item_code": "test-099",
+            "item_group": "All Item Groups"
+        }).insert()
+
         setttings_mock = MagicMock()
         setttings_mock.workspace_id = "ws123"
         setttings_mock.clockify_url = "https://api.clockify.me/api/v1"
@@ -396,7 +599,7 @@ class TestClockifyIntegration(unittest.TestCase):
         user_item = MagicMock()
         user_item.erpnext_employee = "HR-EMP-00099"
         user_item.clockify_user_id = "user123"
-        user_item.erpnext_employee_name = "Hans Peter"
+        user_item.erpnext_employee_name = "Hans"
         setttings_mock.user_mapping = [user_item]
 
         mock_get_doc.return_value = setttings_mock
@@ -411,10 +614,25 @@ class TestClockifyIntegration(unittest.TestCase):
         args, kwargs = mock_import.call_args
         self.assertEqual(args[3], "user123")
         self.assertEqual(args[7], "HR-EMP-00099")
-        self.assertEqual(args[5], "Hans Peter")
+        self.assertEqual(args[5], "Hans")
+
+        if frappe.db.exists("Employee", "HR-EMP-00099"):
+            frappe.get_doc("Employee", "HR-EMP-00099").delete()
+
+        if frappe.db.exists("Item", "test-099"):
+            frappe.get_doc("Item", "test-099").delete()
+        frappe.db.commit()
+
+        frappe.db.rollback()
 
     @patch("frappe.get_doc")
     def test_shouldThrowError_whenUserMappingNotFound(self, mock_get_doc):
+        self.item_doc = frappe.get_doc({
+            "doctype": "Item",
+            "item_code": "test-099",
+            "item_group": "All Item Groups"
+        }).insert()
+
         settings_mock = MagicMock()
         settings_mock.user_mapping = []
         mock_get_doc.return_value = settings_mock
@@ -425,6 +643,11 @@ class TestClockifyIntegration(unittest.TestCase):
                 dienstleistungs_artikel="test-099",
                 activity_type="Planning"
             )
+        
+        if frappe.db.exists("Item", "test-099"):
+            frappe.get_doc("Item", "test-099").delete()
+
+        frappe.db.commit()
  
     # --------------------------------------------
     # CLOCKIFY_SERVICE.PY TESTS
