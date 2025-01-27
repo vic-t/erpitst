@@ -239,7 +239,7 @@ def import_clockify_entries_to_timesheet(
 
     week_start_iso = get_week_start_iso()
 
-    entries = clockify_service.fetch_clockify_entries(clockify_user_id, week_start_iso)
+    entries = clockify_service.fetch_clockify_entries(clockify_user_id, week_start_iso, clockify_tags_id)
     if not entries:
         frappe.msgprint("Keine Einträge gefunden.")
         return
@@ -252,7 +252,7 @@ def import_clockify_entries_to_timesheet(
     for entry in entries:
         project_name = entry["project"]["name"]
         try:
-            duplicate_imports_validation(entry["id"])
+            #duplicate_imports_validation(entry["id"])
             if not validate_project_existence(project_name):
                 if project_name not in missing_projects:
                     missing_projects.add(project_name)

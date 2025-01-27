@@ -86,7 +86,7 @@ class ClockifyService:
         return response.json()
 
 
-    def fetch_clockify_entries(self, user_id: str, week_start_iso: str) -> List[Dict]:
+    def fetch_clockify_entries(self, user_id: str, week_start_iso: str, tag_id: str) -> List[Dict]:
         """
         Fetch time entries for a given user ID, starting form a specified week start date.
 
@@ -109,11 +109,18 @@ class ClockifyService:
             "page-size": MAX_PAGE_SIZE
         }
 
-        return self._send_request(
+        entries = self._send_request(
             method="GET",
             endpoint=endpoint_url,
             params=params
         )
+    
+        filtered_entries = [
+            entry for entry in entries
+            if tag_id not in entry.get("tagIds", [])
+        ]
+
+        return filtered_entries
 
     def update_clockify_entry(self, entry_id: str, data: dict) -> None:
         """
