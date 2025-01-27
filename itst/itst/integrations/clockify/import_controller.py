@@ -41,7 +41,7 @@ def duplicate_imports_validation(entry_id: str):
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
         frappe.throw(f"Der Eintrag mit der ID \"{entry_id}\" wurde bereits importiert. Doppelte Importe sind nicht erlaubt. Überprüfen sie die vorhandenen Einträge im Timesheet.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
 
-def _calculate_times(entry: Dict) -> Dict[str, float | str]:
+def _calculate_times(entry: Dict) -> Dict[str, float]:
     """
     Convert the Clockify time entry's start/duration into ERPNext compatible fields.
 
@@ -106,7 +106,7 @@ def update_clockify_tag(
     
 def build_timesheet_detail_data(
     entry: Dict,
-    service_item_code: str,
+    dienstleistungs_artikel: str,
     activity_type: str,
     ) -> Dict:
     """
@@ -114,7 +114,7 @@ def build_timesheet_detail_data(
 
     Args:
         entry (Dict): The Clockify time entry.
-        service_item_code (str): The Item Code representing the service provided.
+        dienstleistungs_artikel (str): The Item Code representing the service provided.
         activity_type (str): The Activity Type associated with the kind of service provided.
 
     Returns:
@@ -141,7 +141,7 @@ def build_timesheet_detail_data(
         "billing_hours": time_data["duration_hours"],
         "billing_rate": billing_rate,
         "billing_amount": billing_amount,
-        "category": service_item_code,
+        "category": dienstleistungs_artikel,
         "remarks": entry.get("description", "Default Remarks"),
         "clockify_entry_id": entry_id
     }
@@ -154,7 +154,7 @@ def process_clockify_entry_to_erpnext(
     employee_name: str,
     activity_type: str,
     clockify_tags_id: str,
-    service_item_code: str,
+    dienstleistungs_artikel: str,
     clockify_service: ClockifyService,
     timesheet_service: ERPNextTimesheetService,
     ) -> str:
@@ -169,7 +169,7 @@ def process_clockify_entry_to_erpnext(
         employee_name (str): The employee's name in ERPNext.
         activity_type (str): The Activity Type associated with the kind of service provided.
         clockify_tags_id (str): The tag Id to be set on the Clockify entry.
-        service_item_code (str): The Item Code representing the service provided. 
+        dienstleistungs_artikel (str): The Item Code representing the service provided. 
         clockify_service (ClockifyService): The service to interact with Clockify.
         timesheet_service (ERPNextTimesheetService): The service to interact with ERPNext Timesheets.
     
@@ -183,7 +183,7 @@ def process_clockify_entry_to_erpnext(
 
     timesheet_detail_data = build_timesheet_detail_data(
         entry,
-        service_item_code,
+        dienstleistungs_artikel,
         activity_type,
     )
 
@@ -207,7 +207,7 @@ def process_clockify_entry_to_erpnext(
 def import_clockify_entries_to_timesheet(
     timesheet_service: ERPNextTimesheetService,
     clockify_service: ClockifyService,
-    service_item_code: str,
+    dienstleistungs_artikel: str,
     clockify_user_id: str,
     clockify_tags_id: str,
     employee_name: str,
@@ -222,7 +222,7 @@ def import_clockify_entries_to_timesheet(
     Args:
         timesheet_service (ERPNextTimesheetService): The service to interact with ERPNext Timesheets.
         clockify_service (ClockifyService): The service to interact with Clockify.
-        service_item_code (str): The Item Code representing the service provided. 
+        dienstleistungs_artikel (str): The Item Code representing the service provided. 
         clockify_user_id (str): The Clockify user ID whose entries are to be fetched.
         clockify_tags_id (str): The tag Id to be set on the Clockify entry.
         employee_name (str): The employee's name in ERPNext.
@@ -267,7 +267,7 @@ def import_clockify_entries_to_timesheet(
                 employee_name,
                 activity_type,
                 clockify_tags_id,
-                service_item_code,
+                dienstleistungs_artikel,
                 clockify_service,
                 timesheet_service,
             )
