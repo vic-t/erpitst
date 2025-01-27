@@ -2,9 +2,10 @@ import frappe
 from .clockify_service import ClockifyService
 from .erpnext_timesheet_service import ERPNextTimesheetService
 from .import_controller import import_clockify_entries_to_timesheet
+from datetime import datetime
 
 @frappe.whitelist()
-def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, activity_type: str):
+def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, activity_type: str, clockify_start_time: str, clockify_end_time: str):
     """
     Whitelisted method to import Clockify entries into ERPNext Timesheet based on user selection.
 
@@ -27,6 +28,12 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
     if not selected_mapping:
         frappe.throw("Ausgewählter User nicht gefunden.")
 
+    start_dt_obj = datetime.strptime(clockify_start_time, "%Y-%m-%d %H:%M:%S")
+    end_dt_obj   = datetime.strptime(clockify_end_time,   "%Y-%m-%d %H:%M:%S")
+
+    start_iso = start_dt_obj.strftime("%Y-%m-%dT%H:%M:%SZ")
+    end_iso   = end_dt_obj.strftime("%Y-%m-%dT%H:%M:%SZ")
+
     clockify_user_id = selected_mapping.clockify_user_id
     erpnext_employee_id = selected_mapping.erpnext_employee
     erpnext_employee_name = selected_mapping.erpnext_employee_name
@@ -35,9 +42,9 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
     clockify_tags_id = clockify_import_settings.tags_id
 
     clockify_service = ClockifyService(
-        api_key=clockify_api_key,
-        base_url=clockify_base_url, 
-        workspace_id=clockify_workspace_id
+        api_key = clockify_api_key,
+        base_url = clockify_base_url, 
+        workspace_id = clockify_workspace_id,
     )
 
     timesheet_service = ERPNextTimesheetService(company="ITST")
@@ -49,6 +56,8 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
         clockify_user_id,
         clockify_tags_id,
         erpnext_employee_name,
-        activity_type,        
-        erpnext_employee_id,     
+        activity_type,
+        erpnext_employee_id,
+        clockify_start_time,
+        clockify_end_time
     )

@@ -10,7 +10,7 @@ from .utilities import (
     parse_hhmm_to_minutes,
     round_minutes_to_5,
     minutes_to_hhmm,
-    get_week_start_iso,
+    convert_erpnext_to_iso_datetime,
     build_html_link
 )
 
@@ -213,6 +213,8 @@ def import_clockify_entries_to_timesheet(
     employee_name: str,
     activity_type: str,
     employee_id: str,
+    clockify_start_time: str,
+    clockify_end_time: str
     ):
     """
     Import multiple time entries from Clockify for a specific user into ERPNext Timesheets.
@@ -236,10 +238,10 @@ def import_clockify_entries_to_timesheet(
         Exception: If a project does not exist in ERPNext or a duplicate is detected, 
             the relevant errors are thrown or logged. Also raises if any entry processing fails.
     """
+    start_iso = convert_erpnext_to_iso_datetime(clockify_start_time)
+    end_iso = convert_erpnext_to_iso_datetime(clockify_end_time)
 
-    week_start_iso = get_week_start_iso()
-
-    entries = clockify_service.fetch_clockify_entries(clockify_user_id, week_start_iso, clockify_tags_id)
+    entries = clockify_service.fetch_clockify_entries(clockify_user_id, clockify_tags_id, start_iso, end_iso)
     if not entries:
         frappe.msgprint("Keine Einträge gefunden.")
         return

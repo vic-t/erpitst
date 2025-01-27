@@ -86,7 +86,7 @@ class ClockifyService:
         return response.json()
 
 
-    def fetch_clockify_entries(self, user_id: str, week_start_iso: str, tag_id: str) -> List[Dict]:
+    def fetch_clockify_entries(self, user_id: str, tag_id: str, start_iso: str, end_iso: str) -> List[Dict]:
         """
         Fetch time entries for a given user ID, starting form a specified week start date.
 
@@ -103,7 +103,8 @@ class ClockifyService:
         endpoint_url = f"/workspaces/{self.workspace_id}/user/{user_id}/time-entries"
 
         params = {
-            "get-week-before": week_start_iso ,   
+            "start": start_iso,
+            "end": end_iso,   
             "hydrated": "true",
             "page": DEFAULT_PAGE_NUMBER,
             "page-size": MAX_PAGE_SIZE

@@ -70,13 +70,24 @@ frappe.ui.form.on('Clockify Import Settings', {
 					  reqd: 1
 					},
 					{
-						fieldname: 'selected_user_mapping',
-						fieldtype: 'Select',
-						label: 'Select Clockify User',
-						options: user_options,
-						reqd: 1
-					}
-
+					  fieldname: 'dienstleistungs_artikel',
+					  fieldtype: 'Select',
+					  label: 'Dienstleistungsartikel',
+					  options: dienstleistungs_artikel_options,  
+					  reqd: 1
+					},
+					{
+					  fieldname: 'start_time',
+					  fieldtype: 'Datetime',
+					  label: 'Import Start Datum', 
+					  reqd: 1
+					},
+					{
+					  fieldname: 'end_time',
+					  fieldtype: 'Datetime',
+					  label: 'Import End Datum', 
+					  reqd: 1
+					},
 				  ],
 				  function(values) {
 					frappe.call({
@@ -84,7 +95,9 @@ frappe.ui.form.on('Clockify Import Settings', {
 					  args: {
 						user_mapping_name: values.selected_user_mapping,
 						activity_type: values.activity_type,
-						dienstleistungs_artikel: values.dienstleistungs_artikel
+						dienstleistungs_artikel: values.dienstleistungs_artikel,
+						clockify_start_time: values.start_time,
+						clockify_end_time: values.end_time
 					  },
 					  callback: function(r) {
 					  }
@@ -94,7 +107,7 @@ frappe.ui.form.on('Clockify Import Settings', {
 					console.log("Activity type: " + values.activity_type);
 					console.log("Dienstleistungsartikel: " + values.dienstleistungs_artikel);
 				  },
-				  __('Select User to Import'),
+				  __('Import Auswahl'),
 				  __('Import'));
 				  print(dienstleistungs_artikel)
 				}

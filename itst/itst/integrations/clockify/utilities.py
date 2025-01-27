@@ -17,6 +17,19 @@ def convert_iso_to_erpnext_datetime(iso_datetime: str) -> str:
     datetime_obj = datetime_obj.astimezone(timezone(timedelta(hours=1)))
     return datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
 
+def convert_erpnext_to_iso_datetime(erpnext_datetime):
+    """
+    
+
+    Args:
+    
+
+    Returns:
+
+    """
+    datetime_obj = datetime.strptime(erpnext_datetime, "%Y-%m-%d %H:%M:%S")
+    return datetime_obj.strftime("%Y-%m-%dT%H:%M:%SZ")
+
 def parse_duration(duration: str) -> Tuple[float, str]:
     """
     Parse an ISO 8601 duration string (PT1H30M) and returns the total hours in decimal plus a 'HH:MM' string.
