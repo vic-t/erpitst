@@ -88,10 +88,11 @@ class ClockifyService:
 
     def fetch_clockify_entries(self, user_id: str, tag_id: str, start_iso: str, end_iso: str) -> List[Dict]:
         """
-        Fetch time entries for a given user ID, starting form a time picked by the user.
+        Fetch time entries for a given user ID, starting form a time picked by the user, and filters out all entries which are already imported.
 
         Args:
             user_id (str): The Clockify user ID whose entries should be fetched.
+            tag_id (str): Id to know if entry has been imported
             start_iso (str): Start date and time for time entries import. 
             end_iso (str): End date and time for time entries import. 
         

@@ -28,19 +28,6 @@ def validate_project_existence(project_name: str) -> bool:
         return False
     return True
 
-def duplicate_imports_validation(entry_id: str):
-    """
-    Ensure that a Clockify entry Id has not already been imported.
-
-    Args:
-        entry_id (str): The Id of the Clockify entry to validate.
-
-    Raises: 
-        frappe.ValidationError: If the entry already exists in a Timesheet Detail.
-    """
-    if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
-        frappe.throw(f"Der Eintrag mit der ID \"{entry_id}\" wurde bereits importiert. Doppelte Importe sind nicht erlaubt. Überprüfen sie die vorhandenen Einträge im Timesheet.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
-
 def _calculate_times(entry: Dict) -> Dict[str, float]:
     """
     Convert the Clockify time entry's start/duration into ERPNext compatible fields.
@@ -59,7 +46,7 @@ def _calculate_times(entry: Dict) -> Dict[str, float]:
         frappe.ValidationError: If the duration format is invalid.
     """
     start_str = entry["timeInterval"]["start"]
-    user_time_zone = entry["user"]["settings"]["timeZone"]  # "Europe/Zurich"
+    user_time_zone = entry["user"]["settings"]["timeZone"] 
 
     from_time = convert_iso_to_erpnext_datetime(start_str, user_time_zone)
 
@@ -222,7 +209,7 @@ def import_clockify_entries_to_timesheet(
     """
     Import multiple time entries from Clockify for a specific user into ERPNext Timesheets.
 
-    Validates each entry (checking for duplicates, project existence). If valid, it processes the entry to create or update a Timesheet in ERPNext an updates the entry in Clockify
+    Validates each entry (checking for project existence). If valid, it processes the entry to create or update a Timesheet in ERPNext an updates the entry in Clockify
 
     Args:
         timesheet_service (ERPNextTimesheetService): The service to interact with ERPNext Timesheets.
@@ -259,7 +246,6 @@ def import_clockify_entries_to_timesheet(
     for entry in entries:
         project_name = entry["project"]["name"]
         try:
-            #duplicate_imports_validation(entry["id"])
             if not validate_project_existence(project_name):
                 if project_name not in missing_projects:
                     missing_projects.add(project_name)
@@ -282,10 +268,6 @@ def import_clockify_entries_to_timesheet(
                 imported_entries_count += 1
 
         except Exception as e:
-            frappe.log_error(
-                frappe.get_traceback(),
-                f"Fehler bei der Verarbeitung des Clockify-Eintrags. ID={entry.get('id')}"
-            )
             error_count += 1
             failed_entries_info.append(f"Eintrag {entry.get('id')}: {str(e)}")
 

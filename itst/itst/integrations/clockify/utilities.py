@@ -5,10 +5,11 @@ from typing import Tuple, Dict
 
 def convert_iso_to_erpnext_datetime(iso_datetime: str, user_time_zone: str) -> str:
     """
-    Convert an ISO 8601 datetime string into an ERPNext compatible datetime format (YYYY-MM-DD HH:MM:SS).
+    Convert an ISO 8601 datetime string into an ERPNext compatible datetime format (YYYY-MM-DD HH:MM:SS), and sets time to local timezone (time is fetch in UTC).
 
     Args:
         iso_datetime (str): The ISO 8601 datetime string ('2025-01-01T10:00:00Z)
+        user_time_zone (str): Time zone of user from clockify (Europ/Zurich)
 
     Returns:
         str: A string in the format 'YYYY-MM-DD HH:MM:SS'.
@@ -119,15 +120,3 @@ def build_html_link(url: str, text: str) -> str:
     {text}
     </a>
 """
-
-def get_week_start_iso() -> str:
-    """
-    Get the ISO 8601 string for the start of the current week (Monday 00:00:00)
-
-    Returns:
-        str: For example, '2025-01-20T00:00:00Z'.
-    """
-    today = datetime.utcnow().date()
-    weekday = today.weekday()
-    monday = today - timedelta(days=weekday)
-    return f"{monday.isoformat()}T00:00:00Z"
