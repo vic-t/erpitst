@@ -58,7 +58,10 @@ def _calculate_times(entry: Dict) -> Dict[str, float]:
     Raises:
         frappe.ValidationError: If the duration format is invalid.
     """
-    from_time = convert_iso_to_erpnext_datetime(entry["timeInterval"]["start"])
+    start_str = entry["timeInterval"]["start"]
+    user_time_zone = entry["user"]["settings"]["timeZone"]  # "Europe/Zurich"
+
+    from_time = convert_iso_to_erpnext_datetime(start_str, user_time_zone)
 
     try:
         duration_hours, duration_formatted = parse_duration(entry["timeInterval"]["duration"])
@@ -187,12 +190,6 @@ def process_clockify_entry_to_erpnext(
         activity_type,
     )
 
-    update_clockify_tag(
-        clockify_service,
-        entry,
-        clockify_tags_id 
-    )
-
     if timesheet_name:
         timesheet_service.add_detail_to_timesheet(timesheet_name, timesheet_detail_data)
     else:
@@ -201,6 +198,12 @@ def process_clockify_entry_to_erpnext(
             timesheet_title,
             timesheet_detail_data
         )
+    
+    update_clockify_tag(
+        clockify_service,
+        entry,
+        clockify_tags_id 
+    )
 
     return timesheet_name
 
@@ -230,6 +233,8 @@ def import_clockify_entries_to_timesheet(
         employee_name (str): The employee's name in ERPNext.
         activity_type (str): The Activity Type associated with the kind of service provided.
         employee_id (str): The ERPNext employee ID.
+        clockify_start_time (str): Start date and time for time entries import.
+        clockify_end_time (str): End date and time for time entries import.
     
     Returns:
         None: Raises an exception if some imports failed or prints a success message otherwise.

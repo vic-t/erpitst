@@ -88,11 +88,12 @@ class ClockifyService:
 
     def fetch_clockify_entries(self, user_id: str, tag_id: str, start_iso: str, end_iso: str) -> List[Dict]:
         """
-        Fetch time entries for a given user ID, starting form a specified week start date.
+        Fetch time entries for a given user ID, starting form a time picked by the user.
 
         Args:
             user_id (str): The Clockify user ID whose entries should be fetched.
-            week_start_iso (str): An ISO8601 string representing the start of the week (e.g. '2025-01-01T00:00:00Z').
+            start_iso (str): Start date and time for time entries import. 
+            end_iso (str): End date and time for time entries import. 
         
         Returns:
             List[Dict]: A list of fetched time entries from Clockify.

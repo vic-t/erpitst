@@ -1,31 +1,38 @@
 import re
+import pytz
 from datetime import datetime, timezone, timedelta
-from typing import Tuple
+from typing import Tuple, Dict
 
-def convert_iso_to_erpnext_datetime(iso_datetime: str) -> str:
+def convert_iso_to_erpnext_datetime(iso_datetime: str, user_time_zone: str) -> str:
     """
     Convert an ISO 8601 datetime string into an ERPNext compatible datetime format (YYYY-MM-DD HH:MM:SS).
 
     Args:
-        iso_datetime (str): The ISO 8601 date time string ('2025-01-01T10:00:00Z)
+        iso_datetime (str): The ISO 8601 datetime string ('2025-01-01T10:00:00Z)
 
     Returns:
         str: A string in the format 'YYYY-MM-DD HH:MM:SS'.
     """
-    #get timezone dynamically, not hardcoded, get timezone via config or parameter
-    datetime_obj = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
-    datetime_obj = datetime_obj.astimezone(timezone(timedelta(hours=1)))
-    return datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
+    iso_cleaned = iso_datetime.replace("Z", "")
 
-def convert_erpnext_to_iso_datetime(erpnext_datetime):
+    dt_naive_utc = datetime.strptime(iso_cleaned, "%Y-%m-%dT%H:%M:%S")
+
+    dt_utc = pytz.utc.localize(dt_naive_utc)
+    local_tz = pytz.timezone(user_time_zone)
+
+    local_dt = dt_utc.astimezone(local_tz)
+
+    return local_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+def convert_erpnext_to_iso_datetime(erpnext_datetime: str) -> str:
     """
-    
+    Convert ERPNext datetime format to a ISO 8601 datetime string (YYYY-MM-DDTHH:MM:SSZ).
 
     Args:
-    
+        erpnext_datetime: The ERPNext datetime string ('2025-01-01 10:00:00)
 
     Returns:
-
+        str: A string in the ISO 8601 format
     """
     datetime_obj = datetime.strptime(erpnext_datetime, "%Y-%m-%d %H:%M:%S")
     return datetime_obj.strftime("%Y-%m-%dT%H:%M:%SZ")

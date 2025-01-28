@@ -13,6 +13,8 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
         user_mapping_name (str): The ERPNext employee Id, ERPNext employee name and the Clockify user Id mapped.
         dienstleistungs_artikel (str): The Item Code representing the service provided. 
         activity_type (str): The Activity Type associated with the kind of service provided.
+        clockify_start_time (str): Start date and time for time entries import. 
+        clockify_end_time (str): End date and time for time entries import. 
 
     Raises:
         frappe.ValidationError: If the selected user mapping is not found in 'Clockify Import Settings'.
@@ -27,12 +29,6 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
             break
     if not selected_mapping:
         frappe.throw("Ausgewählter User nicht gefunden.")
-
-    start_dt_obj = datetime.strptime(clockify_start_time, "%Y-%m-%d %H:%M:%S")
-    end_dt_obj   = datetime.strptime(clockify_end_time,   "%Y-%m-%d %H:%M:%S")
-
-    start_iso = start_dt_obj.strftime("%Y-%m-%dT%H:%M:%SZ")
-    end_iso   = end_dt_obj.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     clockify_user_id = selected_mapping.clockify_user_id
     erpnext_employee_id = selected_mapping.erpnext_employee
