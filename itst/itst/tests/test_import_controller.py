@@ -10,7 +10,6 @@ from itst.itst.integrations.clockify.import_controller import (
     process_clockify_entry_to_erpnext,
     import_clockify_entries_to_timesheet,
     validate_project_existence,
-    duplicate_imports_validation
 )
 
 class TestImportController(unittest.TestCase):
@@ -251,27 +250,6 @@ class TestImportController(unittest.TestCase):
 
             frappe.db.commit()
             frappe.db.rollback()
-
-    def test_shouldThrowError_whenDuplicateImportAttempted(self):
-        timesheet_doc = frappe.get_doc({
-            "doctype": "Timesheet",
-            "time_logs": [
-                {
-                    "doctype": "Timesheet Detail",
-                    "title": "TestTimsheetDuplicate",
-                    "clockify_entry_id": 1234567890
-                }
-            ],
-        })  
-        timesheet_doc.insert()
-
-        with self.assertRaises(frappe.ValidationError):
-            duplicate_imports_validation(1234567890)
-
-        self.assertIsNone(duplicate_imports_validation(9876543210))
-        if frappe.db.exists("Timesheet", "TestTimsheetDuplicate"):
-            frappe.get_doc("Timesheet", "TestTimsheetDuplicate").delete()
-        frappe.db.rollback()
     
     def test_shouldReturnTrue_whenProjectExists(self):
 

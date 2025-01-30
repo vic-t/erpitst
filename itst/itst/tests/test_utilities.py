@@ -6,7 +6,6 @@ from itst.itst.integrations.clockify.utilities import (
     round_minutes_to_5,
     convert_iso_to_erpnext_datetime,
     build_html_link,
-    get_week_start_iso
 )
 
 class TestUtilities(unittest.TestCase):
@@ -42,7 +41,3 @@ class TestUtilities(unittest.TestCase):
         self.assertIn("<a href=", link)
         self.assertIn("http://example.com", link)
         self.assertIn("Klicke hier", link)
-    
-    def test_shouldReturnWeekStartIso_whenCalled(self):
-        iso_val = get_week_start_iso()
-        self.assertIn("T00:00:00Z", iso_val)
