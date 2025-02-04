@@ -15,12 +15,16 @@
   {
    "fieldname": "workspace_id",
    "fieldtype": "Data",
-   "label": "Workspace Id"
+   "in_list_view": 1,
+   "label": "Workspace Id",
+   "reqd": 1
   },
   {
    "fieldname": "api_key",
    "fieldtype": "Password",
-   "label": "API key"
+   "in_list_view": 1,
+   "label": "API key",
+   "reqd": 1
   },
   {
    "fieldname": "column_break",
@@ -29,7 +33,9 @@
   {
    "fieldname": "tags_id",
    "fieldtype": "Data",
-   "label": "Tag Id"
+   "in_list_view": 1,
+   "label": "Tag Id",
+   "reqd": 1
   },
   {
    "fieldname": "section_break",
@@ -39,11 +45,12 @@
    "fieldname": "user_mapping",
    "fieldtype": "Table",
    "label": "Users",
-   "options": "Clockify User Mapping"
+   "options": "Clockify User Mapping",
+   "reqd": 1
   }
  ],
  "issingle": 1,
- "modified": "2025-01-29 12:01:41.331513",
+ "modified": "2025-02-04 14:38:35.143888",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Clockify Import Settings",
