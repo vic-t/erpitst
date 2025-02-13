@@ -8,6 +8,7 @@
   "api_key",
   "column_break",
   "tags_id",
+  "clockify_url",
   "section_break",
   "user_mapping"
  ],
@@ -42,6 +43,12 @@
    "fieldtype": "Section Break"
   },
   {
+   "fieldname": "clockify_url",
+   "fieldtype": "Data",
+   "label": "Clockify URL",
+   "reqd": 1
+  },
+  {
    "fieldname": "user_mapping",
    "fieldtype": "Table",
    "label": "Users",
@@ -50,7 +57,7 @@
   }
  ],
  "issingle": 1,
- "modified": "2025-02-04 14:38:35.143888",
+ "modified": "2025-02-13 09:34:59.953115",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Clockify Import Settings",
