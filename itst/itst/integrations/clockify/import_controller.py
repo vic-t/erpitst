@@ -85,7 +85,6 @@ def update_clockify_tag(
         entry (Dict): The full time entry dictionary form Clockify.
         clockify_tags_id (str): The tag Id to be added to the time entry
     """
-    
     clockify_update_data = {
         "description": entry.get("description", "No description"),
         "end": entry["timeInterval"]["end"],
@@ -94,7 +93,7 @@ def update_clockify_tag(
         "tagIds": [clockify_tags_id]
     }
     clockify_service.update_clockify_entry(entry["id"], clockify_update_data )
-    
+
 def build_timesheet_detail_data(
     entry: Dict,
     dienstleistungs_artikel: str,
@@ -245,7 +244,7 @@ def import_clockify_entries_to_timesheet(
     failed_entries_info = []
 
     base_url = get_url()
-
+    
     for entry in entries:
         project_name = entry["project"]["name"]
         try:
@@ -270,14 +269,13 @@ def import_clockify_entries_to_timesheet(
                 clockify_service,
                 timesheet_service,
             )
+            frappe.db.commit()
             if result is not None:
                 imported_entries_count += 1
-
         except Exception as e:
+            frappe.db.rollback()
             error_count += 1
             failed_entries_info.append(f"Eintrag {entry.get('id')}: {str(e)}")
-
-    frappe.db.commit()
 
     if error_count > 0:
         error_log_link = build_html_link(f"{base_url}/desk#List/Error%20Log/List", "Error log")
