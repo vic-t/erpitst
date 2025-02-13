@@ -60,31 +60,24 @@ class ClockifyService:
 
         api_url = f"{self.base_url}{endpoint}"
 
-        response = requests.request(
-            method=method,
-            url=api_url,
-            headers=merged_headers,
-            params=params,
-            json=json_data
-        )
-
-        if response.status_code not in (200, 201):
+        try:
+            response = requests.request(
+                method=method,
+                url=api_url,
+                headers=merged_headers,
+                params=params,
+                json=json_data
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
             frappe.log_error(
-                title="Clockify API Request Error",
-                message=(
-                    f"Fehler beim Aufrufen der Clockify-API.\n"
-                    f"URL: {api_url}\n"
-                    f"Statuscode: {response.status_code}\n"
-                    f"Response: {response.text}"
+                title="Clockify API Request Exception",
+                message=f"Fehler beim Aufrufen der Clockify-API: {str(e)}\nURL: {api_url}"
                 )
-            )
             frappe.throw(
-                "Es gab einen Fehler bei der Kommunikation mit der Clockify-API. "
-                "Bitte überprüfen Sie die Error Logs für weitere Details."
-            )
-        
-        return response.json()
-
+                "Fehler bei der Kommunikation mit der Clockify-API. Bitte überprüfen Sie die Error Logs."
+                  )
+        return response.json()    
 
     def fetch_clockify_entries(self, user_id: str, tag_id: str, start_iso: str, end_iso: str) -> List[Dict]:
         """
