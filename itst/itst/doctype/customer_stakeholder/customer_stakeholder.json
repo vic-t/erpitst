@@ -1,0 +1,84 @@
+{
+ "creation": "2022-02-14 11:07:22.726801",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "stakeholder_type",
+  "customer",
+  "contact",
+  "address",
+  "email",
+  "phone"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "default": "IT Partner",
+   "fieldname": "stakeholder_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Stakeholder Type",
+   "options": "IT Partner\nSoftware-Lieferant",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "customer.customer_primary_contact",
+   "fetch_if_empty": 1,
+   "fieldname": "contact",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Contact",
+   "options": "Contact"
+  },
+  {
+   "columns": 2,
+   "fetch_from": "customer.customer_primary_address",
+   "fetch_if_empty": 1,
+   "fieldname": "address",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Address",
+   "options": "Address"
+  },
+  {
+   "columns": 2,
+   "fetch_from": "contact.email_id",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "contact.phone",
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Phone",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2025-02-27 14:44:09.824041",
+ "modified_by": "Administrator",
+ "module": "ITST",
+ "name": "Customer Stakeholder",
+ "owner": "lars.mueller@libracore.com",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
