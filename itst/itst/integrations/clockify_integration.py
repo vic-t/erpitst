@@ -12,11 +12,11 @@ load_dotenv()
 CLOCKIFY_API_KEY = os.getenv("CLOCKIFY_API_KEY")
 WORKSPACE_ID = os.getenv("CLOCKIFY_WORKSPACE_ID")
 CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1"
-USER_ID = "6745c94707ed306748cb1bb5"
+USER_ID = os.getenv("USER_ID")
 
 
-def fetch_all_clockify_entries():
-    url = f"{CLOCKIFY_BASE_URL}/workspaces/{WORKSPACE_ID}/user/{USER_ID}/time-entries"
+def fetch_all_clockify_entries(workspace_id, clockify_user_id):
+    url = f"{CLOCKIFY_BASE_URL}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": CLOCKIFY_API_KEY}
 
     start = "2024-12-13T00:00:00Z"
@@ -139,7 +139,6 @@ def process_single_clockify_entry(clockify_entry):
         project_name = clockify_entry["project"]["name"]
         user_name = clockify_entry["user"]["name"]
 
-        # Billing-Infos aus dem Eintrag holen
         billing_rate = clockify_entry["hourlyRate"]["amount"] / 100
         billing_amount = billing_rate * duration_hours
 
@@ -177,9 +176,9 @@ def process_single_clockify_entry(clockify_entry):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Clockify Import Error")
 
-def import_clockify_entries_to_timesheet():
+def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id):
     try:
-        all_entries = fetch_all_clockify_entries()
+        all_entries = fetch_all_clockify_entries(workspace_id, clockify_user_id)
 
         if not all_entries:
             frappe.msgprint("No new entries found.")
@@ -190,7 +189,18 @@ def import_clockify_entries_to_timesheet():
             process_single_clockify_entry(entry)
             imported_count += 1
 
-        frappe.msgprint(f"{imported_count} entries imported successfully.")
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Clockify Multi Import Error")
-        frappe.throw("Error importing multiple Clockify entries. Check the logs for details.")
+
+
+@frappe.whitelist()
+def run_clockify_import():
+    settings = frappe.get_doc("Clockify Import Settings")
+    workspace_id = settings.workspace_id
+
+    for mapping in settings.user_mappings:
+        clockify_user_id = mapping.clockify_user_id
+    print("clockify user id:", clockify_user_id)
+    print(f"workspace {workspace_id}")
+
+    import_clockify_entries_to_timesheet(workspace_id, clockify_user_id)
