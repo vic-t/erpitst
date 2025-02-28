@@ -65,7 +65,7 @@ frappe.ui.form.on('Clockify Import Settings', {
 					{
 					  fieldname: 'activity_type',
 					  fieldtype: 'Select',
-					  label: 'Activity Type',
+					  label: 'Aktivität Typ',
 					  options: activity_type_options,  
 					  reqd: 1
 					},

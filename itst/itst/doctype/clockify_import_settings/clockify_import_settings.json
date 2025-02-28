@@ -5,10 +5,11 @@
  "engine": "InnoDB",
  "field_order": [
   "workspace_id",
-  "user_mapping",
   "api_key",
-  "clockify_url",
-  "tags_id"
+  "column_break",
+  "tags_id",
+  "section_break",
+  "user_mapping"
  ],
  "fields": [
   {
@@ -17,29 +18,32 @@
    "label": "Workspace Id"
   },
   {
-   "fieldname": "user_mapping",
-   "fieldtype": "Table",
-   "label": "Users",
-   "options": "Clockify User Mapping"
-  },
-  {
    "fieldname": "api_key",
    "fieldtype": "Password",
    "label": "API key"
   },
   {
-   "fieldname": "clockify_url",
-   "fieldtype": "Data",
-   "label": "Clockify URL"
+   "fieldname": "column_break",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "tags_id",
    "fieldtype": "Data",
    "label": "Tag Id"
+  },
+  {
+   "fieldname": "section_break",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "user_mapping",
+   "fieldtype": "Table",
+   "label": "Users",
+   "options": "Clockify User Mapping"
   }
  ],
  "issingle": 1,
- "modified": "2024-12-23 10:32:20.265424",
+ "modified": "2025-01-29 12:01:41.331513",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Clockify Import Settings",
