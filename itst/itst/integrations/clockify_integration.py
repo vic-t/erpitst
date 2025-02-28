@@ -138,6 +138,9 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
         new_timesheet_name = create_timesheet(company, erpnext_employee_id, time_log_data, unique_Timesheet_name)
         timesheet_name = new_timesheet_name
 
+    workspace_id = clockify_entry["workspaceId"] 
+    update_clockify_entry(workspace_id, clockify_entry)
+
     return timesheet_name
 
 def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name):
@@ -201,7 +204,6 @@ def run_clockify_import(user_mapping_name):
 
 def project_validation(project_name):
     if project_name and not frappe.db.exists("Project", {"project_name": project_name}):
-
         return False
     return True 
 
@@ -209,3 +211,19 @@ def duplicate_imports_validation(entry_id):
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
         frappe.throw(f"Eintrag \"{entry_id}\" wurden bereits importiert") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
 
+
+def update_clockify_entry(workspace_id, entry):
+    url = f"{CLOCKIFY_BASE_URL}/workspaces/{workspace_id}/time-entries/{entry['id']}"
+    headers = {"X-Api-Key": CLOCKIFY_API_KEY, "Content-Type": "application/json"}
+
+    data = {
+        "description": entry.get("description", "No description"),
+        "end": entry["timeInterval"]["end"],
+        "projectId": entry["projectId"],
+        "start": entry["timeInterval"]["start"],
+        "tagIds": ["675c4ba16f79f63af4d20203"],
+    }
+
+    response = requests.put(url, headers=headers, json=data)
+    if response.status_code != 200:
+        frappe.log_error(f"Clockify-Eintrag {entry['id']} konnte nach dem Import nicht aktualisiert werden: {response.status_code}, {response.text}“, “Clockify Update Fehler")
