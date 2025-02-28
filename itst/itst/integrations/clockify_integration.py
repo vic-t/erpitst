@@ -39,6 +39,7 @@ def convert_iso_to_erpnext_datetime(iso_datetime):
     dt = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
     dt = dt.astimezone(timezone(timedelta(hours=1)))
     erpnext_datetime = dt.strftime("%Y-%m-%d %H:%M:%S")
+    print(erpnext_datetime)
     return erpnext_datetime
 
 def parse_duration(duration):
@@ -67,11 +68,7 @@ def create_timesheet(company, erpnext_employee_id, time_log_data, unique_Timeshe
             }
         ],
     })    
-    print("Timesheet Data Before Insert:", timesheet.as_dict())
-
     timesheet.insert()
-    print("Timesheet Data After Insert:", timesheet.as_dict())
-
     frappe.db.commit()
     return timesheet.name
 
@@ -86,12 +83,7 @@ def add_time_log_to_timesheet(timesheet_name, time_log_data):
         "doctype": "Timesheet Detail",
         **time_log_data,
     })
-    print("Timesheet Data Before Insert:", timesheet.as_dict())
-
     timesheet.save()
-
-    print("Timesheet Data After Insert:", timesheet.as_dict())
-
     frappe.db.commit()
     return timesheet.name
 
@@ -114,7 +106,6 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
     duration_hours, duration_formatted = parse_duration(clockify_entry["timeInterval"]["duration"])
 
     project_name = clockify_entry["project"]["name"]
-    user_name = clockify_entry["user"]["name"]
     entry_id = clockify_entry["id"]
 
     unique_Timesheet_name = f"{erpnext_employee_name}_{project_name}"
@@ -125,7 +116,7 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
 
     company = "ITST"
     time_log_data = {
-        "activity_type": "Planning",
+        "activity_type": "Planung",
         "from_time": from_time,
         "to_time": to_time,
         "duration": duration_formatted,
@@ -136,7 +127,7 @@ def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_e
         "billing_hours": duration_hours,
         "billing_rate": billing_rate,
         "billing_amount": billing_amount,
-        "category": "Elia ",
+        "category": "test-001 ",
         "remarks": clockify_entry.get("description", "Default Remarks"),
         "clockify_entry_id": entry_id
     }
@@ -156,12 +147,20 @@ def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext
         frappe.msgprint("Keine Einträge gefunden.")
         return
     
+    missing_projects = set()
     imported_count = 0
     error_count = 0
     errors = []
     for entry in entries:
+        project_name = entry["project"]["name"]
         try:
-            project_validation(entry["project"]["name"])  
+            if not project_validation(project_name):
+                if project_name not in missing_projects:
+                    missing_projects.add(project_name)
+                    frappe.throw(f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
+                else:
+                    raise Exception(f"Projekt '{project_name}' fehlt weiterhin.")
+            
             duplicate_imports_validation(entry["id"])
             result = process_single_clockify_entry(entry, erpnext_employee_id, erpnext_employee_name)
             if result is not None:
@@ -192,7 +191,7 @@ def run_clockify_import(user_mapping_name):
             break
     
     if not selected_mapping:
-        frappe.throw("Ausgewählter user nicht gefunden.")
+        frappe.throw("Ausgewählter user nicht gefunden. Bitte Import nochmals versuchen")
     
     clockify_user_id = selected_mapping.clockify_user_id
     erpnext_employee_id = selected_mapping.erpnext_employee
@@ -202,10 +201,11 @@ def run_clockify_import(user_mapping_name):
 
 def project_validation(project_name):
     if project_name and not frappe.db.exists("Project", {"project_name": project_name}):
-        #frappe.msgprint(msg=f"Project {project_name} does not exist.", title="Error", indicator="red") # Wenn frappe.msprint verwendet wird wird die eigenen validation von frappe verwendet, die nicht sehr detailiert ist.
 
-        frappe.throw(f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.")
+        return False
+    return True 
 
 def duplicate_imports_validation(entry_id):
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
-        frappe.throw(f"Eintrag \"{entry_id}\" wurden bereits importiert")
+        frappe.throw(f"Eintrag \"{entry_id}\" wurden bereits importiert") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
+
