@@ -9,9 +9,8 @@ from datetime import datetime,timezone,timedelta
 load_dotenv()
 
 CLOCKIFY_API_KEY = os.getenv("CLOCKIFY_API_KEY")
-WORKSPACE_ID = os.getenv("CLOCKIFY_WORKSPACE_ID")
 CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1"
-USER_ID = os.getenv("USER_ID")
+
 
 def fetch_all_clockify_entries(workspace_id, clockify_user_id):
     url = f"{CLOCKIFY_BASE_URL}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
@@ -25,28 +24,16 @@ def fetch_all_clockify_entries(workspace_id, clockify_user_id):
         "end": end,      
         "hydrated": "true",
         "page": 1,
-        "page-size": 50
+        "page-size": 5000
     }
 
-    all_entries = []
-    while True:
-        response = requests.get(url, headers=headers, params=params)
-        if response.status_code != 200:
-            frappe.log_error(f"Fehler beim Abrufen der Einträge.: {response.status_code}, {response.text}")
-            frappe.throw("Fehler beim Abrufen der Einträge.")
-            break
-
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code == 200:
         entries = response.json()
-
-        if not entries:
-            # no more entries
-            break
-
-        all_entries.extend(entries)
-
-        params["page"] += 1
-
-    return all_entries
+        return entries
+    else:
+        frappe.log_error(f"Fehler beim Abrufen der Einträge.: {response.status_code}, {response.text}")
+        frappe.throw("Fehler beim Abrufen der Einträge.")
 
 def convert_iso_to_erpnext_datetime(iso_datetime):
     dt = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
@@ -80,8 +67,11 @@ def create_timesheet(company, employee, time_log_data, unique_Timesheet_name):
             }
         ],
     })    
-    
+    print("Timesheet Data Before Insert:", timesheet.as_dict())
+
     timesheet.insert()
+    print("Timesheet Data After Insert:", timesheet.as_dict())
+
     frappe.db.commit()
     return timesheet.name
 
@@ -96,7 +86,12 @@ def add_time_log_to_timesheet(timesheet_name, time_log_data):
         "doctype": "Timesheet Detail",
         **time_log_data,
     })
+    print("Timesheet Data Before Insert:", timesheet.as_dict())
+
     timesheet.save()
+
+    print("Timesheet Data After Insert:", timesheet.as_dict())
+
     frappe.db.commit()
     return timesheet.name
 
@@ -142,6 +137,7 @@ def process_single_clockify_entry(clockify_entry, employee):
         "billing_amount": billing_amount,
         "category": "Elia ",
         "remarks": clockify_entry.get("description", "Default Remarks"),
+        #"clockify_entry_id": clockify_entry["id"]
     }
 
     if timesheet_name:
@@ -153,26 +149,24 @@ def process_single_clockify_entry(clockify_entry, employee):
     return timesheet_name
 
 def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, employee):
-    all_entries = fetch_all_clockify_entries(workspace_id, clockify_user_id)
+    entries = fetch_all_clockify_entries(workspace_id, clockify_user_id)
 
-    if not all_entries:
+    if not entries:
         frappe.msgprint("Keine Einträge gefunden.")
         return
 
     imported_count = 0
     error_count = 0
     errors = []
-    for entry in all_entries:
+    for entry in entries:
         try:
-
-            result = None
-            if project_validation(entry["project"]["name"]):
-                result = process_single_clockify_entry(entry, employee)
+            project_validation(entry["project"]["name"])  
+            result = process_single_clockify_entry(entry, employee)
             if result is not None:
                 imported_count += 1
         except Exception as e:
 
-            frappe.log_error(frappe.get_traceback(), f"Fehler bei der Verarbeitung des Clockify-Eintrags. {entry.get('id')}")
+            frappe.log_error(frappe.get_traceback(), f"Fehler bei der Verarbeitung des Clockify-Eintrags. {entry.get('id')}") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
             error_count += 1
 
             errors.append(f"Eintrag {entry.get('id')}: {str(e)}")
@@ -211,4 +205,3 @@ def project_validation(project_name):
             indicator="red"
         )
         frappe.throw(f"Project '{project_name}' does not exist. Please correct the name.")
-    return True
