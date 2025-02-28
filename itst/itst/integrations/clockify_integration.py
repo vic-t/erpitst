@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 
 
 def fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url):
+
     get_week_before = get_import_time()
     url = f"{clockify_base_url}/workspaces/{workspace_id}/user/{clockify_user_id}/time-entries"
     headers = {"X-Api-Key": clockify_api_key}
@@ -13,7 +14,7 @@ def fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clo
     end = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%dT00:00:00Z")
     
     params = {
-        #"get-week-before": get_week_before,   
+        "get-week-before": get_week_before,   
         "hydrated": "true",
         "page": 1,
         "page-size": 5000,
@@ -81,7 +82,8 @@ def add_detail_to_timesheet (timesheet_name, timesheet_detail_data):
     #frappe.db.commit()
     return timesheet.name
 
-def find_timesheet(timesheet_title ):
+
+def find_timesheet(unique_Timesheet_name):
     timesheets = frappe.get_list(
         "Timesheet",
         filters={
@@ -92,7 +94,11 @@ def find_timesheet(timesheet_title ):
     )
     return timesheets[0].name if timesheets else None
 
-def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid, clockify_api_key, clockify_base_url):
+
+def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_employee_name, clockify_tagsid):
+
+    #frappe.db.savepoint("save_point")
+
     from_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["start"])
     to_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["end"])
 
@@ -101,8 +107,8 @@ def process_clockify_entry_to_erpnext(clockify_entry, erpnext_employee_id, erpne
     project_name = clockify_entry["project"]["name"]
     entry_id = clockify_entry["id"]
 
-    timesheet_title  = f"{erpnext_employee_name}_{project_name}"
-    timesheet_name = find_timesheet(timesheet_title )
+    unique_Timesheet_name = f"{erpnext_employee_name}_{project_name}"
+    timesheet_name = find_timesheet(unique_Timesheet_name)
 
     billing_rate = clockify_entry["hourlyRate"]["amount"] / 100
     billing_amount = billing_rate * duration_hours
@@ -146,6 +152,7 @@ def build_html_link(url,text):
 """
 def import_clockify_entries (workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name, clockify_api_key, clockify_base_url, clockify_tagsid):
     entries = fetch_clockify_entries(workspace_id, clockify_user_id, clockify_api_key, clockify_base_url)
+
     if not entries:
         frappe.msgprint("Keine Einträge gefunden.")
         return
@@ -157,6 +164,7 @@ def import_clockify_entries (workspace_id, clockify_user_id, erpnext_employee_id
         project_name = entry["project"]["name"]
         try:
             if not validate_project_existence (project_name):
+
                 if project_name not in missing_projects:
                     missing_projects.add(project_name)
                     create_project_link = build_html_link("http://erp.itst.ch.localhost:8000/desk#Form/Project/New%20Project%201", "Neues Projekt erstellen")
@@ -183,13 +191,13 @@ def import_clockify_entries (workspace_id, clockify_user_id, erpnext_employee_id
 
 @frappe.whitelist()
 def run_clockify_import(user_mapping_name):
-    settings = frappe.get_doc("Clockify Import Settings")
-    workspace_id = settings.workspace_id
+    clockify_import_settings = frappe.get_doc("Clockify Import Settings")
+    workspace_id = clockify_import_settings.workspace_id
 
     selected_mapping = None
-    for m in settings.user_mapping:
-        if m.erpnext_employee == user_mapping_name:
-            selected_mapping = m
+    for user in clockify_import_settings.user_mapping:
+        if user.erpnext_employee == user_mapping_name:
+            selected_mapping = user
             break
     
     if not selected_mapping:
@@ -198,21 +206,21 @@ def run_clockify_import(user_mapping_name):
     clockify_user_id = selected_mapping.clockify_user_id
     erpnext_employee_id = selected_mapping.erpnext_employee
     erpnext_employee_name = selected_mapping.erpnext_employee_name
-    clockify_api_key = settings.get_password('api_key')
-    clockify_base_url = settings.clockify_url
-    clockify_tagsid = settings.tags_id
 
-    import_clockify_entries (workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name, clockify_api_key, clockify_base_url, clockify_tagsid)
+    clockify_api_key = clockify_import_settings.get_password('api_key')
+    clockify_base_url = clockify_import_settings.clockify_url
+    clockify_tagsid = clockify_import_settings.tags_id
+
+    import_clockify_entries(workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name, clockify_api_key, clockify_base_url, clockify_tagsid) 
 
 def validate_project_existence (project_name):
     if project_name and not frappe.db.exists("Project", {"project_name": project_name}):
-        return False
-    return True 
+        return True
+    return False 
 
 def check_for_duplicate_import(entry_id):
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
         frappe.throw(f"Der Eintrag mit der ID \"{entry_id}\" wurde bereits importiert. Doppelte Importe sind nicht erlaubt. Überprüfen sie die vorhandenen Einträge im Timesheet.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
-
 
 def update_clockify_entry(workspace_id, entry, clockify_tagsid, clockify_api_key, clockify_base_url):
     url = f"{clockify_base_url}/workspaces/{workspace_id}/time-entries/{entry['id']}"
@@ -228,9 +236,9 @@ def update_clockify_entry(workspace_id, entry, clockify_tagsid, clockify_api_key
 
     response = requests.put(url, headers=headers, json=data)
     if response.status_code != 200:
-        frappe.log_error(f"Fehler beim Aktualisieren des Clockify-Eintrags nach dem Import: Die Aktualisierung des Eintrags mit der ID {entry['id']} ist fehlgeschlagen. HTTP-Statuscode: {response.status_code}, Serverantwort: {response.text}. Bitte überprüfen Sie die API-Schlüssel, den Eintrag oder die Verbindung zu Clockify.", "Clockify Update Fehler")
-        frappe.throw(f" Der Clockify-Eintrag mit der ID {entry['id']} konnte nach dem Import nicht aktualisiert werden. Dies könnte auf einen API-Fehler oder ein Problem mit der Verbindung zu Clockify hinweisen. Bitte wenden Sie sich an den Administrator, um den Fehler zu beheben.")
-
+        frappe.log_error(f"Clockify-Eintrag {entry['id']} konnte nach dem Import nicht aktualisiert werden: {response.status_code}, {response.text}“, “Clockify Update Fehler")
+        frappe.throw(f"Clockify-Eintrag {entry['id']} konnte nach dem Import nicht aktualisiert werden")
+        #frappe.db.rollback(save_point="save_point")
 
 def get_import_time():
     today = datetime.utcnow().date()

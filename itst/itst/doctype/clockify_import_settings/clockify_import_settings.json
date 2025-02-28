@@ -5,9 +5,10 @@
  "engine": "InnoDB",
  "field_order": [
   "workspace_id",
-  "import_start",
-  "import_ende",
-  "user_mapping"
+  "user_mapping",
+  "api_key",
+  "clockify_url",
+  "tags_id"
  ],
  "fields": [
   {
@@ -16,24 +17,29 @@
    "label": "Workspace Id"
   },
   {
-   "fieldname": "import_start",
-   "fieldtype": "Datetime",
-   "label": "Import Start"
-  },
-  {
-   "fieldname": "import_ende",
-   "fieldtype": "Datetime",
-   "label": "Import Ende"
-  },
-  {
    "fieldname": "user_mapping",
    "fieldtype": "Table",
    "label": "Users",
    "options": "Clockify User Mapping"
+  },
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Password",
+   "label": "API key"
+  },
+  {
+   "fieldname": "clockify_url",
+   "fieldtype": "Data",
+   "label": "Clockify URL"
+  },
+  {
+   "fieldname": "tags_id",
+   "fieldtype": "Data",
+   "label": "Tag Id"
   }
  ],
  "issingle": 1,
- "modified": "2024-12-16 10:35:07.248267",
+ "modified": "2024-12-23 10:32:20.265424",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Clockify Import Settings",
