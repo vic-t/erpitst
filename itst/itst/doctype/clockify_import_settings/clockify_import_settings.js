@@ -6,8 +6,7 @@ frappe.ui.form.on('Clockify Import Settings', {
 		if (!frm.is_new()) {
 			frm.add_custom_button(__('Import now'), function() {
 				const user_options = frm.doc.user_mapping.map(u => {
-                    return {label: u.clockify_user_id, value: u.erpnext_employee};
-					// return {label: u.erpnext_employee, value: u.clockify_user_id};
+                    return {label: u.erpnext_employee_name, value: u.erpnext_employee};
                 });
 
 				if (user_options.length === 0) {
