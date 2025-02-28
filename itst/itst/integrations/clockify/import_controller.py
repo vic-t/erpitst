@@ -250,7 +250,10 @@ def import_clockify_entries_to_timesheet(
                 if project_name not in missing_projects:
                     missing_projects.add(project_name)
                     create_project_link = build_html_link("http://erp.itst.ch.localhost:8000/desk#Form/Project/New%20Project%201", "Neues Projekt erstellen")
-                    frappe.throw(f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.{create_project_link}")
+                    frappe.throw(
+                        title="Project Error",
+                        msg=f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.{create_project_link}"
+                        )
                 else:
                     raise Exception(f"Projekt '{project_name}' fehlt weiterhin.")
 
@@ -275,7 +278,20 @@ def import_clockify_entries_to_timesheet(
 
     if error_count > 0:
         error_log_link = build_html_link("http://erp.itst.ch.localhost:8000/desk#List/Error%20Log/List", "Error log")
-        frappe.throw(f"Der Importprozess wurde abgeschlossen: {imported_entries_count} Einträge wurden erfolgreich importiert. Allerdings {error_count} Einträge sind fehlgeschlagen. Bitte überprufen Sie die Fehlerdetails unter {error_log_link}.")
+        frappe.log_error(
+            title="Clockify Import Error",
+            message="Der Import der Time entries war nicht ganz erfolgreich. Bitte gehen sie auch ihr Clockify Login und schauen sie sich alle Time entries an, bei denen keine Tag ist (In ERP). Schauen sie dort, ob der Name des Projekts mit dem in ERPNext übereinstimmt. Überprüfen sie bitte auch dass keine Zeitlichen überschneidungen zwischen den Time entries vorhanden ist. Wenn sie anpassungen an einem Timesheet vornehmen müssen, entfernen sie den Tag, so dass das Time entrie ohne Problem importiert werden kann. Bei anderen Problem, oder genauer anleitungen schaue im Wiki nach."
+        )
+
+        frappe.throw(
+            title="Error",
+            msg=f"Der Importprozess wurde abgeschlossen: {imported_entries_count} Einträge wurden erfolgreich importiert. Allerdings {error_count} Einträge sind fehlgeschlagen. Bitte überprufen Sie die Fehlerdetails unter {error_log_link}."
+            )
+
     else:
         timesheet_link = build_html_link("http://erp.itst.ch.localhost:8000/desk#List/Timesheet/List", "Timesheet")
-        frappe.msgprint(f"Der Importprozess wurde erfolgreich abgeschlossen: Ingesamt wurden {imported_entries_count} Einträge erfolgreich importiert. Sie können die importierten Daten jetzt im Timesheet-Bereich einsehen, indem Sie den folgenden Link verwenden {timesheet_link}.")
+        frappe.msgprint(
+            title="Success",
+            indicator="green",
+            message=f"Der Importprozess wurde erfolgreich abgeschlossen: Ingesamt wurden {imported_entries_count} Einträge erfolgreich importiert. Sie können die importierten Daten jetzt im Timesheet-Bereich einsehen, indem Sie den folgenden Link verwenden {timesheet_link}."
+            )

@@ -1,5 +1,7 @@
 import frappe
 from typing import Optional, Dict
+from frappe.utils import get_datetime
+from erpnext.projects.doctype.timesheet.timesheet import Timesheet
 
 class ERPNextTimesheetService:
     """
@@ -12,7 +14,7 @@ class ERPNextTimesheetService:
         Initialize the service with a specific company.
 
         Args:
-            company (str): The anme of the company to be used for in Timesheets.
+            company (str): The name of the company to be used for in Timesheets.
         """
         self.company = company
     
@@ -39,7 +41,7 @@ class ERPNextTimesheetService:
                     **timesheet_detail_data,
                 }
             ],
-        })    
+        })
         timesheet.insert()
         return timesheet.name
 
