@@ -53,12 +53,12 @@ def parse_duration(duration):
         minutes = int(match.group(4))
     return hours + (minutes / 60), f"{hours}:{minutes:02}"
 
-def create_timesheet(company, employee, time_log_data, unique_Timesheet_name):
 
+def create_timesheet(company, erpnext_employee_id, time_log_data, unique_Timesheet_name):
     timesheet = frappe.get_doc({
         "doctype": "Timesheet",
         "company": company,
-        "employee": employee,
+        "employee": erpnext_employee_id,
         "title": unique_Timesheet_name,
         "time_logs": [
             {
@@ -107,7 +107,7 @@ def find_or_create_timesheet(unique_Timesheet_name):
     )
     return timesheets[0].name if timesheets else None
 
-def process_single_clockify_entry(clockify_entry, employee):
+def process_single_clockify_entry(clockify_entry, erpnext_employee_id, erpnext_employee_name):
     from_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["start"])
     to_time = convert_iso_to_erpnext_datetime(clockify_entry["timeInterval"]["end"])
 
@@ -115,8 +115,9 @@ def process_single_clockify_entry(clockify_entry, employee):
 
     project_name = clockify_entry["project"]["name"]
     user_name = clockify_entry["user"]["name"]
+    entry_id = clockify_entry["id"]
 
-    unique_Timesheet_name = f"{user_name}_{project_name}"
+    unique_Timesheet_name = f"{erpnext_employee_name}_{project_name}"
     timesheet_name = find_or_create_timesheet(unique_Timesheet_name)
 
     billing_rate = clockify_entry["hourlyRate"]["amount"] / 100
@@ -137,31 +138,32 @@ def process_single_clockify_entry(clockify_entry, employee):
         "billing_amount": billing_amount,
         "category": "Elia ",
         "remarks": clockify_entry.get("description", "Default Remarks"),
-        #"clockify_entry_id": clockify_entry["id"]
+        "clockify_entry_id": entry_id
     }
 
     if timesheet_name:
         add_time_log_to_timesheet(timesheet_name, time_log_data)
     else:
-        new_timesheet_name = create_timesheet(company, employee, time_log_data, unique_Timesheet_name)
+        new_timesheet_name = create_timesheet(company, erpnext_employee_id, time_log_data, unique_Timesheet_name)
         timesheet_name = new_timesheet_name
 
     return timesheet_name
 
-def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, employee):
+def import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name):
     entries = fetch_all_clockify_entries(workspace_id, clockify_user_id)
 
     if not entries:
         frappe.msgprint("Keine Einträge gefunden.")
         return
-
+    
     imported_count = 0
     error_count = 0
     errors = []
     for entry in entries:
         try:
             project_validation(entry["project"]["name"])  
-            result = process_single_clockify_entry(entry, employee)
+            duplicate_imports_validation(entry["id"])
+            result = process_single_clockify_entry(entry, erpnext_employee_id, erpnext_employee_name)
             if result is not None:
                 imported_count += 1
         except Exception as e:
@@ -193,11 +195,17 @@ def run_clockify_import(user_mapping_name):
         frappe.throw("Ausgewählter user nicht gefunden.")
     
     clockify_user_id = selected_mapping.clockify_user_id
-    erpnext_employee = selected_mapping.erpnext_employee
+    erpnext_employee_id = selected_mapping.erpnext_employee
+    erpnext_employee_name = selected_mapping.erpnext_employee_name
 
-    import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee) 
+    import_clockify_entries_to_timesheet(workspace_id, clockify_user_id, erpnext_employee_id, erpnext_employee_name) 
 
 def project_validation(project_name):
     if project_name and not frappe.db.exists("Project", {"project_name": project_name}):
         #frappe.msgprint(msg=f"Project {project_name} does not exist.", title="Error", indicator="red") # Wenn frappe.msprint verwendet wird wird die eigenen validation von frappe verwendet, die nicht sehr detailiert ist.
+
         frappe.throw(f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.")
+
+def duplicate_imports_validation(entry_id):
+    if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
+        frappe.throw(f"Eintrag \"{entry_id}\" wurden bereits importiert")
