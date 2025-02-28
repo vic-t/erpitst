@@ -15,15 +15,49 @@ from .utilities import (
 )
 
 def validate_project_existence(project_name: str) -> bool:
+    """
+    Check if a given project name exists in ERPNext.
+
+    Args: 
+        project_name (str): The name of the project to check.
+    
+    Returns:
+        bool: True if the project exists, otherwise False.
+    """
     if project_name and not frappe.db.exists("Project", {"project_name": project_name}):
         return False
     return True
 
 def duplicate_imports_validation(entry_id: str):
+    """
+    Ensure that a Clockify entry Id has not already been imported.
+
+    Args:
+        entry_id (str): The Id of the Clockify entry to validate.
+
+    Raises: 
+        frappe.ValidationError: If the entry already exists in a Timesheet Detail.
+    """
     if frappe.db.exists("Timesheet Detail", {"clockify_entry_id": entry_id}):
         frappe.throw(f"Der Eintrag mit der ID \"{entry_id}\" wurde bereits importiert. Doppelte Importe sind nicht erlaubt. Überprüfen sie die vorhandenen Einträge im Timesheet.") # genauer noch sagen was genau falsch war, welcher ERPnext user und bei welchem projekt, mit zeitstemple
 
-def _calculate_times(entry: Dict) -> Dict[str, str]:
+def _calculate_times(entry: Dict) -> Dict[str, float | str]:
+    """
+    Convert the Clockify time entry's start/duration into ERPNext compatible fields.
+
+    Args: 
+        entry (Dict): A dictionary representing the Clockify time entryies containing 'timeInterval' with 'start' and 'duration'.
+    
+    Returns:
+        Dict[str, float | str]: Includes:
+            - 'from_time_str' (str),
+            - 'to_time_str' (str),
+            - 'duration_rounded_hhmm' (str),
+            - 'duration_hours' (float)
+
+    Raises:
+        frappe.ValidationError: If the duration format is invalid.
+    """
     from_time = convert_iso_to_erpnext_datetime(entry["timeInterval"]["start"])
 
     try:
@@ -51,7 +85,15 @@ def update_clockify_tag(
     clockify_service: ClockifyService,
     entry: Dict,
     clockify_tags_id: str 
-) -> None:
+    ) -> None:
+    """
+    Update a Clockify entry to add or modify a specific tag (clockify_tags_id)
+
+    Args:
+        clockify_service (ClockifyService): The service instance to interact with Clockify.
+        entry (Dict): The full time entry dictionary form Clockify.
+        clockify_tags_id (str): The tag Id to be added to the time entry
+    """
     
     clockify_update_data = {
         "description": entry.get("description", "No description"),
@@ -64,9 +106,20 @@ def update_clockify_tag(
     
 def build_timesheet_detail_data(
     entry: Dict,
-    dienstleistungs_artikel: str,
+    service_item_code: str,
     activity_type: str,
-) -> Dict:
+    ) -> Dict:
+    """
+    Construct a dictionary of fields for a Timesheet Detail entry in ERPNext based on a Clockify time entry.
+
+    Args:
+        entry (Dict): The Clockify time entry.
+        service_item_code (str): The Item Code representing the service provided.
+        activity_type (str): The Activity Type associated with the kind of service provided.
+
+    Returns:
+        Dict: A dictionary with keys matching Timesheet Detail fields.
+    """
 
     time_data = _calculate_times(entry)
 
@@ -88,7 +141,7 @@ def build_timesheet_detail_data(
         "billing_hours": time_data["duration_hours"],
         "billing_rate": billing_rate,
         "billing_amount": billing_amount,
-        "category": dienstleistungs_artikel,
+        "category": service_item_code,
         "remarks": entry.get("description", "Default Remarks"),
         "clockify_entry_id": entry_id
     }
@@ -101,10 +154,28 @@ def process_clockify_entry_to_erpnext(
     employee_name: str,
     activity_type: str,
     clockify_tags_id: str,
-    dienstleistungs_artikel: str,
+    service_item_code: str,
     clockify_service: ClockifyService,
     timesheet_service: ERPNextTimesheetService,
-) -> str:
+    ) -> str:
+    """
+    Processes a single Clockify entry and imports it into ERPNext as a Timesheet Detail.
+
+    If a Timesheet (Draft) with the pattern '{employee_name}_{project_name}' exists, a new detail will be appended. Otherwise, a new timesheet is created, updates the entry in Clockify by a specific tag.
+
+    Args:
+        entry (Dicts): The single Clockify time entry dictionary.
+        employee_id (str): The ERPNext employee ID.
+        employee_name (str): The employee's name in ERPNext.
+        activity_type (str): The Activity Type associated with the kind of service provided.
+        clockify_tags_id (str): The tag Id to be set on the Clockify entry.
+        service_item_code (str): The Item Code representing the service provided. 
+        clockify_service (ClockifyService): The service to interact with Clockify.
+        timesheet_service (ERPNextTimesheetService): The service to interact with ERPNext Timesheets.
+    
+    Returns:
+        str: The name of the Timesheet (existing or newly created) in ERPNext.
+    """
 
     project_name = entry["project"]["name"]
     timesheet_title = f"{employee_name}_{project_name}"
@@ -112,7 +183,7 @@ def process_clockify_entry_to_erpnext(
 
     timesheet_detail_data = build_timesheet_detail_data(
         entry,
-        dienstleistungs_artikel,
+        service_item_code,
         activity_type,
     )
 
@@ -136,13 +207,35 @@ def process_clockify_entry_to_erpnext(
 def import_clockify_entries_to_timesheet(
     timesheet_service: ERPNextTimesheetService,
     clockify_service: ClockifyService,
-    dienstleistungs_artikel: str,
+    service_item_code: str,
     clockify_user_id: str,
     clockify_tags_id: str,
     employee_name: str,
     activity_type: str,
     employee_id: str,
-):
+    ):
+    """
+    Import multiple time entries from Clockify for a specific user into ERPNext Timesheets.
+
+    Validates each entry (checking for duplicates, project existence). If valid, it processes the entry to create or update a Timesheet in ERPNext an updates the entry in Clockify
+
+    Args:
+        timesheet_service (ERPNextTimesheetService): The service to interact with ERPNext Timesheets.
+        clockify_service (ClockifyService): The service to interact with Clockify.
+        service_item_code (str): The Item Code representing the service provided. 
+        clockify_user_id (str): The Clockify user ID whose entries are to be fetched.
+        clockify_tags_id (str): The tag Id to be set on the Clockify entry.
+        employee_name (str): The employee's name in ERPNext.
+        activity_type (str): The Activity Type associated with the kind of service provided.
+        employee_id (str): The ERPNext employee ID.
+    
+    Returns:
+        None: Raises an exception if some imports failed or prints a success message otherwise.
+
+    Raises:
+        Exception: If a project does not exist in ERPNext or a duplicate is detected, 
+            the relevant errors are thrown or logged. Also raises if any entry processing fails.
+    """
 
     week_start_iso = get_week_start_iso()
 
@@ -174,7 +267,7 @@ def import_clockify_entries_to_timesheet(
                 employee_name,
                 activity_type,
                 clockify_tags_id,
-                dienstleistungs_artikel,
+                service_item_code,
                 clockify_service,
                 timesheet_service,
             )

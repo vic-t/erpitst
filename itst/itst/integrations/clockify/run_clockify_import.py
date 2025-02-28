@@ -4,7 +4,18 @@ from .erpnext_timesheet_service import ERPNextTimesheetService
 from .import_controller import import_clockify_entries_to_timesheet
 
 @frappe.whitelist()
-def run_clockify_import(user_mapping_name, dienstleistungs_artikel, activity_type):
+def run_clockify_import(user_mapping_name: str, service_item_code: str, activity_type: str):
+    """
+    Whitelisted method to import Clockify entries into ERPNext Timesheet based on user selection.
+
+    Args:
+        user_mapping_name (str): The ERPNext employee Id, ERPNext employee name and the Clockify user Id mapped.
+        service_item_code (str): The Item Code representing the service provided. 
+        activity_type (str): The Activity Type associated with the kind of service provided.
+
+    Raises:
+        frappe.ValidationError: If the selected user mapping is not found in 'Clockify Import Settings'.
+    """
     clockify_import_settings = frappe.get_doc("Clockify Import Settings")
     clockify_workspace_id = clockify_import_settings.workspace_id
 
@@ -34,7 +45,7 @@ def run_clockify_import(user_mapping_name, dienstleistungs_artikel, activity_typ
     import_clockify_entries_to_timesheet(
         timesheet_service,
         clockify_service,
-        dienstleistungs_artikel,        
+        service_item_code,        
         clockify_user_id,
         clockify_tags_id,
         erpnext_employee_name,

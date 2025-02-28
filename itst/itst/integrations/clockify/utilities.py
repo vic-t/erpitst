@@ -3,12 +3,33 @@ from datetime import datetime, timezone, timedelta
 from typing import Tuple
 
 def convert_iso_to_erpnext_datetime(iso_datetime: str) -> str:
+    """
+    Convert an ISO 8601 datetime string into an ERPNext compatible datetime format (YYYY-MM-DD HH:MM:SS).
+
+    Args:
+        iso_datetime (str): The ISO 8601 date time string ('2025-01-01T10:00:00Z)
+
+    Returns:
+        str: A string in the format 'YYYY-MM-DD HH:MM:SS'.
+    """
     #get timezone dynamically, not hardcoded, get timezone via config or parameter
     datetime_obj = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
     datetime_obj = datetime_obj.astimezone(timezone(timedelta(hours=1)))
     return datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
 
 def parse_duration(duration: str) -> Tuple[float, str]:
+    """
+    Parse an ISO 8601 duration string (PT1H30M) and returns the total hours in decimal plus a 'HH:MM' string.
+
+    Args:
+        duration (str): ISO 8601 formatted duration
+    
+    Returns:
+        Tuple[float, str]: hours_in_decimal (1.5), formatted string (HH:MM).
+    
+    Raises:
+        ValueError: If the string doesn't match an expected ISO 8601 pattern.
+    """
     hours, minutes = 0, 0
     match = re.match(r"PT((\d+)H)?((\d+)M)?", duration)
     if not match:
@@ -22,18 +43,55 @@ def parse_duration(duration: str) -> Tuple[float, str]:
     return hours + (minutes / 60), f"{hours}:{minutes:02}"
 
 def parse_hhmm_to_minutes(hhmm: str) -> int:
+    """
+    Converts a 'HH:MM' string into total minutes (int).
+
+    Args:
+        hhmm (str): The time string
+    
+    Returns:
+        int: Total minutes (2:05 -> 125).
+    """
     hours_str, minutes_str = hhmm.split(":")
     return int(hours_str) * 60 + int(minutes_str)
 
 def round_minutes_to_5(total_minutes: int) -> int:
+    """
+    Round the given minutes to the nearest 5-minute block.
+
+    Args:
+        total_minutes (int): The original number of minutes.
+
+    Returns:
+        int: The minutes, rounded to the nearest multiple of 5.
+    """
     return int(round(total_minutes / 5.0)) * 5
 
 def minutes_to_hhmm(total_minutes: int) -> str:
+    """
+    Convert total minutes into an 'HH:MM' string.
+
+    Args:
+        total_minutes (int): Total minutes (130)
+
+    Returns:
+        str: 'HH:MM' format (2:10)
+    """
     hours = total_minutes // 60
     minutes = total_minutes % 60
     return f"{hours}:{minutes:02d}"
 
 def build_html_link(url: str, text: str) -> str:
+    """
+    Build a clickable HTML link string with basic styling.
+
+    Args:
+        url (str): The hyperlink URL.
+        text (str): The link text to be displayed.
+
+    Returns:
+        str: A simple HTML <a> tag with the provided URL an text.
+    """
     return f"""
     <a href="{url}"
     target="_blank" 
@@ -43,6 +101,12 @@ def build_html_link(url: str, text: str) -> str:
 """
 
 def get_week_start_iso() -> str:
+    """
+    Get the ISO 8601 string for the start of the current week (Monday 00:00:00)
+
+    Returns:
+        str: For example, '2025-01-20T00:00:00Z'.
+    """
     today = datetime.utcnow().date()
     weekday = today.weekday()
     monday = today - timedelta(days=weekday)
