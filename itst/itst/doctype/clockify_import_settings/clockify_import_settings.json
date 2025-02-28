@@ -8,7 +8,7 @@
   "user_mapping",
   "api_key",
   "clockify_url",
-  "clockify_tags_id"
+  "tags_id"
  ],
  "fields": [
   {
@@ -33,7 +33,7 @@
    "label": "Clockify URL"
   },
   {
-   "fieldname": "clockify_tags_id",
+   "fieldname": "tags_id",
    "fieldtype": "Data",
    "label": "Tag Id"
   }
