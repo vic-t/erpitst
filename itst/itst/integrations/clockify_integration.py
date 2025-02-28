@@ -199,9 +199,5 @@ def run_clockify_import(user_mapping_name):
 
 def project_validation(project_name):
     if project_name and not frappe.db.exists("Project", {"project_name": project_name}):
-        frappe.msgprint(
-            msg=f"Project {project_name} does not exist.",
-            title="Error",
-            indicator="red"
-        )
-        frappe.throw(f"Project '{project_name}' does not exist. Please correct the name.")
+        #frappe.msgprint(msg=f"Project {project_name} does not exist.", title="Error", indicator="red") # Wenn frappe.msprint verwendet wird wird die eigenen validation von frappe verwendet, die nicht sehr detailiert ist.
+        frappe.throw(f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.")
