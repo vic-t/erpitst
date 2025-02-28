@@ -1,12 +1,9 @@
-# test_clockify_service.py
-
 import unittest
 import frappe
 from unittest.mock import patch, MagicMock
 from itst.itst.integrations.clockify.clockify_service import ClockifyService
 
 class TestClockifyService(unittest.TestCase):
-    #Test for fetch_clockify_entries
     @patch("requests.request")
     def test_shouldGetTimeEntries_whenAPICallSucceeds(self, mock_requests_get):
         mock_response = MagicMock()
@@ -34,7 +31,6 @@ class TestClockifyService(unittest.TestCase):
             service = ClockifyService("api_key", "https://api.clockify.me/api/v1", "ws123")
             service.fetch_clockify_entries("user123", "2025-01-01T00:00:00Z")
 
-    #Test for update_clockify_entry
     @patch("requests.request")
     def test_shouldPUTClockifyEntry_whenConnectionIsSuccessful(self, mock_put):
         mock_resp = MagicMock()
@@ -57,7 +53,6 @@ class TestClockifyService(unittest.TestCase):
 
         mock_put.assert_called_once()
 
-    #Test for update_clockify_entry
     @patch("requests.request")
     def test_shouldThrowException_whenConnectionNotSuccessful(self, mock_put):
         mock_resp = MagicMock()

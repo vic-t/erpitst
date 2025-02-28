@@ -1,5 +1,3 @@
-#test_run_clockify_import.py
-
 import unittest
 import frappe
 from unittest.mock import patch, MagicMock

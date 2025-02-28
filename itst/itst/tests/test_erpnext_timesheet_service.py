@@ -1,11 +1,8 @@
-#test_erpnext_timesheet_service.py
-
 import unittest
 import frappe
 from itst.itst.integrations.clockify.erpnext_timesheet_service import ERPNextTimesheetService
 
-class TestErpNextTimesheetService(unittest.TestCase):
-#Test for create_erpnext_timesheet
+class TestERPNextTimesheetService(unittest.TestCase):
     def test_shouldCreateTimesheet_whenValidDataPassed(self):
         self.company_doc = frappe.get_doc({
             "doctype": "Company",
@@ -90,7 +87,6 @@ class TestErpNextTimesheetService(unittest.TestCase):
 
         frappe.db.rollback()
 
-    #Test for add_detail_to_timesheet
     def test_shouldAddTimeLog_whenTimesheetAlreadyExists(self):
         self.company_doc = frappe.get_doc({
             "doctype": "Company",
@@ -152,7 +148,6 @@ class TestErpNextTimesheetService(unittest.TestCase):
 
         frappe.db.rollback()
 
-    #Test for find_timesheet
     def test_shouldReturnTimesheetNameOrNone_whenTitleIsGiven(self):
         self.company_doc = frappe.get_doc({
             "doctype": "Company",

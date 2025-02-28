@@ -1,5 +1,3 @@
-#test_import_controller.py
-
 import unittest
 import frappe
 from unittest.mock import patch, MagicMock
@@ -254,7 +252,6 @@ class TestImportController(unittest.TestCase):
             frappe.db.commit()
             frappe.db.rollback()
 
-    #Tests for duplicate_imports_validation
     def test_shouldThrowError_whenDuplicateImportAttempted(self):
         timesheet_doc = frappe.get_doc({
             "doctype": "Timesheet",
@@ -276,7 +273,6 @@ class TestImportController(unittest.TestCase):
             frappe.get_doc("Timesheet", "TestTimsheetDuplicate").delete()
         frappe.db.rollback()
     
-    #Tests for validate_project_existence
     def test_shouldReturnTrue_whenProjectExists(self):
 
         self.project_doc = frappe.get_doc({

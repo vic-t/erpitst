@@ -43,36 +43,30 @@ class TestClockifyIntegration(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_duration("XYZ")
 
-    #Test for parse_hhmm_to_minutes
     def test_shouldReturnMinutes_whenGivenHHmmFormat(self):
         total_minutes = parse_hhmm_to_minutes("2:05")
         self.assertEqual(total_minutes, 125)
 
-    #Test for minutes_to_hhmm
     def test_shouldReturnHHmm_whenGivenTotalMinutes(self):
         hhmm = minutes_to_hhmm(125)
         self.assertEqual(hhmm, "2:05")
     
-    #Test for round_minutes_to_5
     def test_shouldRoundToNearest5Minutes_whenGivenAnyNumberOfMinutes(self):
         self.assertEqual(round_minutes_to_5(123), 125)
         self.assertEqual(round_minutes_to_5(88), 90)
 
-    #Test for convert_iso_to_erpnext_datetime
     def test_shouldConvertISOToErpnextDatetime_whenGivenISOString(self):
         # UTC 10:30 => +1h => 11:30
         iso_str = "2025-01-01T10:30:00Z" # UTC
         erp_dt = convert_iso_to_erpnext_datetime(iso_str)
         self.assertEqual(erp_dt, "2025-01-01 11:30:00")
 
-    #Test for build_html_link
     def test_shouldReturnCorrectHtmlLink_whenGivenUrlAndText(self):
         link = build_html_link("http://example.com", "Klicke hier")
         self.assertIn("<a href=", link)
         self.assertIn("http://example.com", link)
         self.assertIn("Klicke hier", link)
     
-    #Test for get_week_start_iso
     def test_shouldReturnWeekStartIso_whenCalled(self):
         iso_val = get_week_start_iso()
         self.assertIn("T00:00:00Z", iso_val)
@@ -80,7 +74,6 @@ class TestClockifyIntegration(unittest.TestCase):
     # --------------------------------------------
     # ERPNextTimesheetService TESTS
     # --------------------------------------------
-    #Test for create_erpnext_timesheet
     def test_shouldCreateTimesheet_whenValidDataPassed(self):
         self.company_doc = frappe.get_doc({
             "doctype": "Company",
@@ -165,7 +158,6 @@ class TestClockifyIntegration(unittest.TestCase):
 
         frappe.db.rollback()
 
-    #Test for add_detail_to_timesheet
     def test_shouldAddTimeLog_whenTimesheetAlreadyExists(self):
         self.company_doc = frappe.get_doc({
             "doctype": "Company",
@@ -227,7 +219,6 @@ class TestClockifyIntegration(unittest.TestCase):
 
         frappe.db.rollback()
 
-    #Test for find_timesheet
     def test_shouldReturnTimesheetNameOrNone_whenTitleIsGiven(self):
         self.company_doc = frappe.get_doc({
             "doctype": "Company",
@@ -521,7 +512,6 @@ class TestClockifyIntegration(unittest.TestCase):
             frappe.db.commit()
             frappe.db.rollback()
 
-    #Tests for duplicate_imports_validation
     def test_shouldThrowError_whenDuplicateImportAttempted(self):
         timesheet_doc = frappe.get_doc({
             "doctype": "Timesheet",
@@ -543,7 +533,6 @@ class TestClockifyIntegration(unittest.TestCase):
             frappe.get_doc("Timesheet", "TestTimsheetDuplicate").delete()
         frappe.db.rollback()
     
-    #Tests for validate_project_existence
     def test_shouldReturnTrue_whenProjectExists(self):
 
         self.project_doc = frappe.get_doc({
@@ -552,7 +541,6 @@ class TestClockifyIntegration(unittest.TestCase):
             "status": "Open"
         }).insert()
 
-        #Look at method "validate_project_existence", and code to understand why.
         self.assertTrue(validate_project_existence("Test_Project"))
         self.assertFalse(validate_project_existence("Test_Project1"))
 
@@ -652,7 +640,6 @@ class TestClockifyIntegration(unittest.TestCase):
     # --------------------------------------------
     # CLOCKIFY_SERVICE.PY TESTS
     # --------------------------------------------
-    #Test for fetch_clockify_entries
     @patch("requests.request")
     def test_shouldGetTimeEntries_whenAPICallSucceeds(self, mock_requests_get):
         mock_response = MagicMock()
@@ -680,7 +667,6 @@ class TestClockifyIntegration(unittest.TestCase):
             service = ClockifyService("api_key", "https://api.clockify.me/api/v1", "ws123")
             service.fetch_clockify_entries("user123", "2025-01-01T00:00:00Z")
 
-    #Test for update_clockify_entry
     @patch("requests.request")
     def test_shouldPUTClockifyEntry_whenConnectionIsSuccessful(self, mock_put):
         mock_resp = MagicMock()
@@ -703,7 +689,6 @@ class TestClockifyIntegration(unittest.TestCase):
 
         mock_put.assert_called_once()
 
-    #Test for update_clockify_entry
     @patch("requests.request")
     def test_shouldThrowException_whenConnectionNotSuccessful(self, mock_put):
         mock_resp = MagicMock()
