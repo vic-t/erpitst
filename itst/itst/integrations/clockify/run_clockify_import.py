@@ -2,7 +2,6 @@ import frappe
 from .clockify_service import ClockifyService
 from .erpnext_timesheet_service import ERPNextTimesheetService
 from .import_controller import import_clockify_entries_to_timesheet
-from datetime import datetime
 
 @frappe.whitelist()
 def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, activity_type: str, clockify_start_time: str, clockify_end_time: str):
