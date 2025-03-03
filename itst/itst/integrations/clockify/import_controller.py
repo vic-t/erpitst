@@ -1,6 +1,7 @@
 import frappe
 from datetime import datetime, timedelta
-from typing import List, Dict
+from typing import Dict
+from frappe.utils import get_url
 
 from .clockify_service import ClockifyService
 from .erpnext_timesheet_service import ERPNextTimesheetService
@@ -243,13 +244,15 @@ def import_clockify_entries_to_timesheet(
     error_count = 0
     failed_entries_info = []
 
+    base_url = get_url()
+
     for entry in entries:
         project_name = entry["project"]["name"]
         try:
             if not validate_project_existence(project_name):
                 if project_name not in missing_projects:
                     missing_projects.add(project_name)
-                    create_project_link = build_html_link("http://erp.itst.ch.localhost:8000/desk#Form/Project/New%20Project%201", "Neues Projekt erstellen")
+                    create_project_link = build_html_link(f"{base_url}/desk#Form/Project/New%20Project%201", "Neues Projekt erstellen")
                     frappe.throw(
                         title="Project Error",
                         msg=f"Das im Eintrag angegebene Projekt '{project_name}' existiert nicht in ERPNext. Bitte legen Sie das Projekt zuerst an oder korrigieren Sie den Projektnamen im Clockify-Eintrag.{create_project_link}"
@@ -277,7 +280,7 @@ def import_clockify_entries_to_timesheet(
     frappe.db.commit()
 
     if error_count > 0:
-        error_log_link = build_html_link("http://erp.itst.ch.localhost:8000/desk#List/Error%20Log/List", "Error log")
+        error_log_link = build_html_link(f"{base_url}/desk#List/Error%20Log/List", "Error log")
         frappe.log_error(
             title="Clockify Import Error",
             message="Der Import der Time entries war nicht ganz erfolgreich. Bitte gehen sie auch ihr Clockify Login und schauen sie sich alle Time entries an, bei denen keine Tag ist (In ERP). Schauen sie dort, ob der Name des Projekts mit dem in ERPNext übereinstimmt. Überprüfen sie bitte auch dass keine Zeitlichen überschneidungen zwischen den Time entries vorhanden ist. Wenn sie anpassungen an einem Timesheet vornehmen müssen, entfernen sie den Tag, so dass das Time entrie ohne Problem importiert werden kann. Bei anderen Problem, oder genauer anleitungen schaue im Wiki nach."
@@ -289,7 +292,7 @@ def import_clockify_entries_to_timesheet(
             )
 
     else:
-        timesheet_link = build_html_link("http://erp.itst.ch.localhost:8000/desk#List/Timesheet/List", "Timesheet")
+        timesheet_link = build_html_link(f"{base_url}/desk#List/Timesheet/List", "Timesheet")
         frappe.msgprint(
             title="Success",
             indicator="green",
