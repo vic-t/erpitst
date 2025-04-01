@@ -75,22 +75,22 @@ def _calculate_times(entry: Dict) -> Dict[str, float]:
 def update_clockify_tag(
     clockify_service: ClockifyService,
     entry: Dict,
-    clockify_tags_id: str 
+    clockify_imported_tag_id: str 
     ) -> None:
     """
-    Update a Clockify entry to add or modify a specific tag (clockify_tags_id)
+    Update a Clockify entry to add or modify a specific tag (clockify_imported_tag_id)
 
     Args:
         clockify_service (ClockifyService): The service instance to interact with Clockify.
         entry (Dict): The full time entry dictionary form Clockify.
-        clockify_tags_id (str): The tag Id to be added to the time entry
+        clockify_imported_tag_id (str): The tag Id to be added to the time entry
     """
     clockify_update_data = {
         "description": entry.get("description", "No description"),
         "end": entry["timeInterval"]["end"],
         "projectId": entry["projectId"],
         "start": entry["timeInterval"]["start"],
-        "tagIds": [clockify_tags_id]
+        "tagIds": [clockify_imported_tag_id]
     }
     clockify_service.update_clockify_entry(entry["id"], clockify_update_data )
 
@@ -164,7 +164,7 @@ def process_clockify_entry_to_erpnext(
     employee_id: str,
     employee_name: str,
     activity_type: str,
-    clockify_tags_id: str,
+    clockify_imported_tag_id: str,
     dienstleistungs_artikel: str,
     clockify_service: ClockifyService,
     timesheet_service: ERPNextTimesheetService,
@@ -179,7 +179,7 @@ def process_clockify_entry_to_erpnext(
         employee_id (str): The ERPNext employee ID.
         employee_name (str): The employee's name in ERPNext.
         activity_type (str): The Activity Type associated with the kind of service provided.
-        clockify_tags_id (str): The tag Id to be set on the Clockify entry.
+        clockify_imported_tag_id (str): The tag Id to be set on the Clockify entry.
         dienstleistungs_artikel (str): The Item Code representing the service provided. 
         clockify_service (ClockifyService): The service to interact with Clockify.
         timesheet_service (ERPNextTimesheetService): The service to interact with ERPNext Timesheets.
@@ -209,7 +209,7 @@ def process_clockify_entry_to_erpnext(
     update_clockify_tag(
         clockify_service,
         entry,
-        clockify_tags_id 
+        clockify_imported_tag_id 
     )
 
     return timesheet_name
@@ -219,7 +219,7 @@ def import_clockify_entries_to_timesheet(
     clockify_service: ClockifyService,
     dienstleistungs_artikel: str,
     clockify_user_id: str,
-    clockify_tags_id: str,
+    clockify_imported_tag_id: str,
     employee_name: str,
     activity_type: str,
     employee_id: str,
@@ -236,7 +236,7 @@ def import_clockify_entries_to_timesheet(
         clockify_service (ClockifyService): The service to interact with Clockify.
         dienstleistungs_artikel (str): The Item Code representing the service provided. 
         clockify_user_id (str): The Clockify user ID whose entries are to be fetched.
-        clockify_tags_id (str): The tag Id to be set on the Clockify entry.
+        clockify_imported_tag_id (str): The tag Id to be set on the Clockify entry.
         employee_name (str): The employee's name in ERPNext.
         activity_type (str): The Activity Type associated with the kind of service provided.
         employee_id (str): The ERPNext employee ID.
@@ -253,7 +253,7 @@ def import_clockify_entries_to_timesheet(
     start_iso = convert_erpnext_to_iso_datetime(clockify_start_time)
     end_iso = convert_erpnext_to_iso_datetime(clockify_end_time)
 
-    entries = clockify_service.fetch_clockify_entries(clockify_user_id, clockify_tags_id, start_iso, end_iso)
+    entries = clockify_service.fetch_clockify_entries(clockify_user_id, clockify_imported_tag_id, start_iso, end_iso)
     if not entries:
         frappe.msgprint("Keine Einträge gefunden.")
         return
@@ -284,7 +284,7 @@ def import_clockify_entries_to_timesheet(
                 employee_id,
                 employee_name,
                 activity_type,
-                clockify_tags_id,
+                clockify_imported_tag_id,
                 dienstleistungs_artikel,
                 clockify_service,
                 timesheet_service,

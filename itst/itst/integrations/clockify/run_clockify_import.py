@@ -34,7 +34,7 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
     erpnext_employee_name = selected_mapping.erpnext_employee_name
     clockify_api_key = clockify_import_settings.get_password("api_key")
     clockify_base_url = clockify_import_settings.clockify_url
-    clockify_tags_id = clockify_import_settings.tags_id
+    clockify_imported_tag_id = clockify_import_settings.imported_tag_id
 
     clockify_service = ClockifyService(
         api_key = clockify_api_key,
@@ -49,7 +49,7 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
         clockify_service,
         dienstleistungs_artikel,        
         clockify_user_id,
-        clockify_tags_id,
+        clockify_imported_tag_id,
         erpnext_employee_name,
         activity_type,
         erpnext_employee_id,
