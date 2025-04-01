@@ -138,6 +138,24 @@ def build_timesheet_detail_data(
 
     return timesheet_detail_data
 
+def set_timesheet_title(entry: Dict, employee_name: str,) -> str:
+    """
+    Generate a Timesheet title in the format: "Name Benutzer - Name Supportprojekt Jahr-Qx"
+
+    Args:
+        entry (Dicts): The single Clockify time entry dictionary.
+        employee_name (str): The employee's name in ERPNext.
+
+    Returns:
+        str: The name for the Timesheet in ERPNext.
+    """
+    project_name = entry["project"]["name"]
+    current_year = datetime.now().year
+
+    current_quarter = (datetime.now().month - 1) // 3 + 1
+
+    return f"{employee_name} - {project_name} {current_year}-Q{current_quarter}"
+
 def process_clockify_entry_to_erpnext(
     entry: Dict,
     employee_id: str,
@@ -167,8 +185,7 @@ def process_clockify_entry_to_erpnext(
         str: The name of the Timesheet (existing or newly created) in ERPNext.
     """
 
-    project_name = entry["project"]["name"]
-    timesheet_title = f"{employee_name}_{project_name}"
+    timesheet_title = set_timesheet_title(entry, employee_name)
     timesheet_name = timesheet_service.find_timesheet(timesheet_title)
 
     timesheet_detail_data = build_timesheet_detail_data(
