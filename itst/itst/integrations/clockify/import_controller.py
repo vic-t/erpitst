@@ -1,7 +1,7 @@
 import frappe
 from datetime import datetime, timedelta
 from typing import Dict
-from frappe.utils import get_url
+from frappe.utils import get_url, get_datetime
 
 from .clockify_service import ClockifyService
 from .erpnext_timesheet_service import ERPNextTimesheetService
@@ -150,9 +150,12 @@ def set_timesheet_title(entry: Dict, employee_name: str,) -> str:
         str: The name for the Timesheet in ERPNext.
     """
     project_name = entry["project"]["name"]
-    current_year = datetime.now().year
+    entry_start = entry["timeInterval"]["start"]
 
-    current_quarter = (datetime.now().month - 1) // 3 + 1
+    start_dt = get_datetime(entry_start)
+
+    current_year = start_dt.year
+    current_quarter = (start_dt.month - 1) // 3 + 1
 
     return f"{employee_name} - {project_name} {current_year}-Q{current_quarter}"
 
