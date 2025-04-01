@@ -12,7 +12,7 @@
   "section_break",
   "user_mapping",
   "section_break_8",
-  "tags"
+  "tags_mapping"
  ],
  "fields": [
   {
@@ -55,21 +55,21 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "tags",
-   "fieldtype": "Table",
-   "label": "Tags",
-   "options": "Clockify Tag Table"
-  },
-  {
    "fieldname": "imported_tag_id",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Imported Tag",
    "reqd": 1
+  },
+  {
+   "fieldname": "tags_mapping",
+   "fieldtype": "Table",
+   "label": "Tags",
+   "options": "Clockify Tag Table"
   }
  ],
  "issingle": 1,
- "modified": "2025-04-01 14:53:37.259644",
+ "modified": "2025-04-01 15:01:07.064972",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Clockify Import Settings",

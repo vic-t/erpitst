@@ -214,6 +214,33 @@ def process_clockify_entry_to_erpnext(
 
     return timesheet_name
 
+def get_dienstleistungsartikel_for_entry(
+    entry: dict, 
+    clockify_tags_mapping: list
+) -> str:
+    """
+    Sucht in clockify_tags_mapping nach einem passenden Tag (Name und ID). Gibt das 'artikel' zurück, wenn gefunden, sonst None.
+
+    Args:
+        entry (Dicts): The single Clockify time entry dictionary.
+        clockify_tags_mapping (list): List of Tags (Name, ID and Artikel).
+
+    Returns:
+        str: The Artikel of which the Tag belongs to.
+    """
+    clockify_entry_tags = entry.get("tags", [])
+
+    for row in clockify_tags_mapping:
+        for clockify_tag in clockify_entry_tags:
+            if (
+                row.tag_name == clockify_tag.get("name") and
+                row.tag_id == clockify_tag.get("id")
+            ):
+                return row.artikel
+    
+    return None
+
+
 def import_clockify_entries_to_timesheet(
     timesheet_service: ERPNextTimesheetService,
     clockify_service: ClockifyService,
@@ -224,7 +251,8 @@ def import_clockify_entries_to_timesheet(
     activity_type: str,
     employee_id: str,
     clockify_start_time: str,
-    clockify_end_time: str
+    clockify_end_time: str,
+    clockify_tags_mapping: list
     ):
     """
     Import multiple time entries from Clockify for a specific user into ERPNext Timesheets.
@@ -279,6 +307,10 @@ def import_clockify_entries_to_timesheet(
                 else:
                     raise Exception(f"Projekt '{project_name}' fehlt weiterhin.")
 
+            overridden_artikel = get_dienstleistungsartikel_for_entry(entry, clockify_tags_mapping)
+
+            dienstleistungs_artikel = overridden_artikel or dienstleistungs_artikel
+
             result = process_clockify_entry_to_erpnext(
                 entry,
                 employee_id,
@@ -294,6 +326,8 @@ def import_clockify_entries_to_timesheet(
                 imported_entries_count += 1
         except Exception as e:
             frappe.db.rollback()
+            error_message = f"Eintrag {entry.get('id')} | Fehler: {str(e)}"
+            frappe.log_error(message=error_message, title="Clockify Import Fehler")
             error_count += 1
             failed_entries_info.append(f"Eintrag {entry.get('id')}: {str(e)}")
 

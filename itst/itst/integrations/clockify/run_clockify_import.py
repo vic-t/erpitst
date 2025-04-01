@@ -19,22 +19,24 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
         frappe.ValidationError: If the selected user mapping is not found in 'Clockify Import Settings'.
     """
     clockify_import_settings = frappe.get_doc("Clockify Import Settings")
-    clockify_workspace_id = clockify_import_settings.workspace_id
 
-    selected_mapping = None
+    selected_user_mapping = None
     for user in clockify_import_settings.user_mapping:
         if user.erpnext_employee == user_mapping_name:
-            selected_mapping = user
+            selected_user_mapping = user
             break
-    if not selected_mapping:
+    if not selected_user_mapping:
         frappe.throw("Ausgewählter User nicht gefunden.")
 
-    clockify_user_id = selected_mapping.clockify_user_id
-    erpnext_employee_id = selected_mapping.erpnext_employee
-    erpnext_employee_name = selected_mapping.erpnext_employee_name
+
+    clockify_user_id = selected_user_mapping.clockify_user_id
+    erpnext_employee_id = selected_user_mapping.erpnext_employee
+    erpnext_employee_name = selected_user_mapping.erpnext_employee_name
     clockify_api_key = clockify_import_settings.get_password("api_key")
+    clockify_workspace_id = clockify_import_settings.workspace_id
     clockify_base_url = clockify_import_settings.clockify_url
     clockify_imported_tag_id = clockify_import_settings.imported_tag_id
+    clockify_tags_mapping = clockify_import_settings.tags_mapping
 
     clockify_service = ClockifyService(
         api_key = clockify_api_key,
@@ -54,5 +56,6 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
         activity_type,
         erpnext_employee_id,
         clockify_start_time,
-        clockify_end_time
+        clockify_end_time,
+        clockify_tags_mapping
     )
