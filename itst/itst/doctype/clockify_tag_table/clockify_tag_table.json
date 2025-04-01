@@ -1,0 +1,43 @@
+{
+ "creation": "2025-04-01 11:36:00.833175",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tag_name",
+  "tag_id",
+  "artikel"
+ ],
+ "fields": [
+  {
+   "fieldname": "tag_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tag name"
+  },
+  {
+   "fieldname": "tag_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tag Id"
+  },
+  {
+   "fieldname": "artikel",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Artikel",
+   "options": "Item"
+  }
+ ],
+ "istable": 1,
+ "modified": "2025-04-01 12:05:58.643683",
+ "modified_by": "Administrator",
+ "module": "ITST",
+ "name": "Clockify Tag Table",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
