@@ -1,4 +1,4 @@
-# Copyright (c) 2022, ITST, libracore and contributors
+# Copyright (c) 2022-2024, ITST, libracore and contributors
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
@@ -65,8 +65,10 @@ def get_data(filters):
     if cint(filters.show_all) == 0:
         customer_condition += """ AND  `tabProject`.`status` = "Open" """
     
-    # if show_invoiced positions: = 1 no filter, otherwise only uninvoiced
-    if cint(filters.show_invoiced) == 0:
+    # if show_invoiced positions: = 1 no filter, otherwise only uninvoiced (or cut-off date)
+    if filters.to_date:
+        customer_condition += """ AND (`tabSales Invoice`.`posting_date` IS NULL OR `tabSales Invoice`.`posting_date` >= "{to_date}") """.format(to_date=filters.to_date)
+    elif cint(filters.show_invoiced) == 0:
         customer_condition += """ AND `tabSales Invoice Item`.`name` IS NULL """
     
     sql_query = """
@@ -79,7 +81,7 @@ def get_data(filters):
             SUM(`tabTimesheet Detail`.`costing_amount`) AS `costing_amount`, 
             MIN(`tabTimesheet Detail`.`from_time`) AS `oldest`,
             MAX(`tabTimesheet Detail`.`to_time`) AS `newest`,
-            `tabCustomer`.`customer_name` AS `customer_name`,
+            (SELECT `customer_name` FROM `tabCustomer` WHERE `tabCustomer`.`name` = `tabProject`.`customer`) AS `customer_name`,
             `tabProject`.`status` AS `status`,
             0 AS `indent`
         FROM `tabTimesheet Detail`
@@ -88,8 +90,8 @@ def get_data(filters):
             `tabTimesheet Detail`.`name` = `tabSales Invoice Item`.`ts_detail`
             AND `tabSales Invoice Item`.`docstatus` < 2
         )
+        LEFT JOIN `tabSales Invoice` ON `tabSales Invoice`.`name` = `tabSales Invoice Item`.`parent`
         LEFT JOIN `tabProject` ON `tabProject`.name = `tabTimesheet Detail`.`project`
-        LEFT JOIN `tabCustomer` ON `tabCustomer`.`name` = `tabProject`.`customer`
         WHERE 
            `tabTimesheet`.`docstatus` = 1
            AND `tabTimesheet Detail`.`project` IS NOT NULL
@@ -135,6 +137,7 @@ def get_data(filters):
                 `tabTimesheet Detail`.`name` = `tabSales Invoice Item`.`ts_detail`
                 AND `tabSales Invoice Item`.`docstatus` < 2
             )
+            LEFT JOIN `tabSales Invoice` ON `tabSales Invoice`.`name` = `tabSales Invoice Item`.`parent`
             LEFT JOIN `tabProject` ON `tabProject`.name = `tabTimesheet Detail`.`project`
             LEFT JOIN `tabCustomer` ON `tabCustomer`.`name` = `tabProject`.`customer`
             WHERE 
@@ -143,6 +146,7 @@ def get_data(filters):
                AND `tabTimesheet Detail`.`project` = "{project}"
                AND ((`tabTimesheet Detail`.`from_time` >= "{from_date}" AND `tabTimesheet Detail`.`from_time` <= "{to_date}")
                 OR (`tabTimesheet Detail`.`to_time` >= "{from_date}" AND `tabTimesheet Detail`.`to_time` <= "{to_date}"))
+               AND (`tabSales Invoice`.`posting_date` IS NULL OR `tabSales Invoice`.`posting_date` >= "{to_date}")
                AND {customer_condition}
             GROUP BY `tabTimesheet Detail`.`name`
             ORDER BY `tabTimesheet Detail`.`from_time` ASC;
