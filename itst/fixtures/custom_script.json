@@ -1,0 +1,189 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Address",
+  "modified": "2022-02-14 10:19:55.336334",
+  "name": "Address-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on(\"Address\", {\n    pincode: function(frm) {\n        if (frm.doc.pincode) {\n\t        get_city_from_pincode(frm.doc.pincode, 'city');\n        }\n    }\n}); "
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Timesheet",
+  "modified": "2022-11-01 18:49:56.892794",
+  "name": "Timesheet-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "// this mapping table defines which item is used for a activity type - kategorie combination\nvar mapping_table = {\n    'Support': {\n        'WinJur': 'WinJur-Support',\n        'DMS': 'DMS-Support',\n        'Informatik': 'IT-Arbeiten',\n        'Telefonie': 'IT-Arbeiten',\n        'Web': 'IT-Arbeiten'\n    },\n    'Projektarbeit': {\n        'WinJur': 'WinJur-Support',\n        'DMS': 'DMS-Support',\n        'Informatik' : 'IT-Arbeiten',\n        'Telefonie': 'IT-Arbeiten',\n        'Web': 'IT-Arbeiten'\n    }\n};\n\nfrappe.ui.form.on('Timesheet', {\n\trefresh(frm) {\n\t\t// category filters\n\t\tfrm.fields_dict.time_logs.grid.get_field('category').get_query =\n            function(doc, cdt, cdn) {\n            \treturn {\n            \t    query: \"itst.itst.filters.activity_item\",\n                    filters: {\n            \t\t    \"keyword\":  \"Dienstleistungen\",\n            \t\t    \"activity_type\": locals[cdt][cdn].activity_type\n                    }\n        \t    };\n            };\n        // set project filters\n        frm.fields_dict.time_logs.grid.get_field('project').get_query =   \n            function() {                                                                      \n            \treturn {\n                    filters: {\n            \t\t    \"is_active\": \"Yes\"\n            \t    }\n            \t};\n            };\n            \n        // break button\n        frm.add_custom_button(__(\"Pause\"), function() {\n            add_break(frm);\n        });\n\t},\n\tbefore_save(frm) {\n\t    // loop throught time logs and check if billable rows have a category\n\t    for (var i = 0; i < frm.doc.time_logs.length; i++) {\n\t        if ((frm.doc.time_logs[i].billable === 1) && (!frm.doc.time_logs[i].category)) {\n\t            frappe.msgprint( \"Bitte in Zeile \" + (i + 1) + \" einen Artikel w\u00e4hlen.\", __(\"Daten pr\u00fcfen\") );\n\t        }\n\t    }\n\t},\n\tbefore_submit(frm) {\n\t    // loop throught time logs and check if billable rows have a category\n\t    for (var i = 0; i < frm.doc.time_logs.length; i++) {\n\t        if ((frm.doc.time_logs[i].billable === 1) && (!frm.doc.time_logs[i].category)) {\n\t            frappe.msgprint( \"Bitte in Zeile \" + (i + 1) + \" einen Artikel w\u00e4hlen.\", __(\"Buchung fehlgeschlagen\") );\n\t            frappe.validated=false;\n\t        }\n\t    }\n\t}\n});\n\nfrappe.ui.form.on('Timesheet Detail', {\n    time_logs_add(frm, cdt, cdn) {\n        /* this is a hotfix to clear project and task in new rows */\n        frappe.model.set_value(cdt, cdn, \"project\", null);\n        frappe.model.set_value(cdt, cdn, \"task\", null);\n\n        var row_idx = frappe.model.get_value(cdt, cdn, 'idx');\n        if (row_idx > 1) {\n            var last_time = frm.doc.time_logs[row_idx - 2].to_time;\n            if (last_time) {\n                frappe.model.set_value(cdt, cdn, 'from_time', last_time);\n            }\n        }\n    },\n    zammad_ticket(frm, cdt, cdn) {\n        show_zammad_link(frm, cdt, cdn);\n    },\n\tform_render(frm, cdt, cdn) {\n\t\tshow_zammad_link(frm, cdt, cdn);\n    },\n    hours(frm, cdt, cdn) {\n        frappe.model.set_value(cdt, cdn, 'billing_hours', frappe.model.get_value(cdt, cdn, 'hours'));\n        frappe.model.set_value(cdt, cdn, 'billing_duration', frappe.model.get_value(cdt, cdn, 'duration'));\n    },\n    activity_type(frm, cdt, cdn) {\n        var row = locals[cdt][cdn];\n        if ([\"Projektarbeit\", \"Support\", \"Fahrtzeit\"].includes(row.activity_type)) {\n            frappe.model.set_value(cdt, cdn, 'billable', 1);\n        }\n    },\n    kategorie(frm, cdt, cdn) {\n        var row = locals[cdt][cdn];\n        if ((row.activity_type) && (row.kategorie)) {\n            frappe.model.set_value(cdt, cdn, 'category', mapping_table[row.activity_type][row.kategorie]);\n        }\n    },\n    aktivitaet(frm, cdt, cdn) {\n        frappe.model.set_value(cdt, cdn, 'activity_type', locals[cdt][cdn].aktivitaet);\n    }\n});\n\nfunction show_zammad_link(frm, cdt, cdn) {\n    var child = locals[cdt][cdn];\n\tif (child.zammad_ticket) {\n    \tvar wrapper = frm.fields_dict[child.parentfield].grid.grid_rows_by_docname[cdn].grid_form.fields_dict['zammad_link_html'].wrapper;\n\t\t$(wrapper).empty();\n\t\t$('<a href=\"' + child.zammad_ticket + '\" target=\"_blank\">Ticket \u00f6ffnen</a>').appendTo(wrapper);\n    }\n}\n\nfunction add_break(frm) {\n    if (frm.doc.time_logs.length >= 1) {\n        frappe.prompt([\n                {'fieldname': 'duration', 'fieldtype': 'Select', 'label': 'Dauer', 'options': '0:05\\n0:10\\n0:15\\n0:20\\n0:25\\n0:30\\n0:35\\n0:40\\n0:45\\n0:50\\n0:55\\n1:00\\n1:05\\n1:10\\n1:15\\n1:20\\n1:25\\n1:30\\n1:35\\n1:40\\n1:45\\n1:50\\n1:55\\n2:00\\n2:05\\n2:10\\n2:15\\n2:20\\n2:25\\n2:30\\n2:35\\n2:40\\n2:45\\n2:50\\n2:55\\n3:00\\n3:05\\n3:10\\n3:15\\n3:20\\n3:25\\n3:30\\n3:35\\n3:40\\n3:45\\n3:50\\n3:55\\n4:00', 'reqd': 1}  \n            ],\n            function(values){\n                var last_time = new Date(frm.doc.time_logs[frm.doc.time_logs.length - 1].to_time);\n                var duration_h = null;\n                if (values.duration) {\n                    var str_parts = values.duration.split(\":\");\n                    var duration_min = parseInt(str_parts[0]) * 60 + parseInt(str_parts[1]);\n                    duration_h = duration_min/60;\n                }\n                console.log(duration_h);\n                if (duration_h) {\n                    var next_start = addHours(duration_h, last_time).toLocaleString( 'sv');\n                    var child = cur_frm.add_child('time_logs');\n                    frappe.model.set_value(child.doctype, child.name, 'from_time', next_start);\n                    cur_frm.refresh_fields();\n                }\n            },\n            'Pause',\n            'OK'\n        );\n    }\n}\n\nfunction addHours(numOfHours, date = new Date()) {\n  date.setTime(date.getTime() + numOfHours * 60 * 60 * 1000);\n\n  return date;\n}"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Sales Invoice",
+  "modified": "2022-08-31 01:00:09.828069",
+  "name": "Sales Invoice-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Sales Invoice', {\n\trefresh(frm) {\n\t\tif (frm.doc.docstatus === 0) {\n    \t    frm.add_custom_button(__(\"Timesheets abrechnen\"), function() {\n                if (frm.doc.customer) {\n                    add_timesheet_positions(frm);\n                } else {\n                    frappe.msgprint(\"Bitte einen Kunden w\u00e4hlen\");\n                }\n            });\n            \n            // override target email\n            override_email(frm);\n    \t}\n    \tif ((frm.doc.__islocal) && (frm.doc.project) && (!frm.doc.customer)) {\n    \t    // fetch customer from project\n    \t    frappe.call({\n                \"method\": \"frappe.client.get\",\n                \"args\": {\n                    \"doctype\": \"Project\",\n                    \"name\": frm.doc.project\n                },\n                \"callback\": function(response) {\n                    var project = response.message;\n                    if (project.customer) {\n                        cur_frm.set_value(\"customer\", project.customer);\n                        setTimeout(function () {\n                            cur_frm.set_value(\"taxes_and_charges\", \"MWST (302) - ITST\");\n                        }, 1000);\n                    } \n                }\n            });\n    \t}\n    \t// custom mail dialog\n    \tif (frm.doc.docstatus === 1) {\n    \t     cur_frm.page.add_action_icon(__(\"fa fa-envelope-o\"), function() {\n                custom_mail_dialog(frm);\n            });\n    \t}\n    \t// remove core email function\n    \tif (document.getElementsByClassName(\"fa-envelope-o\").length === 0) {\n            $(\"span[data-label='E-Mail']\").parent().parent().remove();   // remove Menu > Email\n        }\n        cache_email_footer();       // prepare footer signature\n\t},\n\tbefore_save(frm) {\n\t    if (frm.doc.__islocal) {\n            if (frm.doc.is_return === 1) {\n                cur_frm.set_value(\"naming_series\", \"GU-.#####\");\n            }\n        }\n\t},\n\tcustomer(frm) {\n\t    // hack: after changing the customer, hard-set taxes\n\t    setTimeout(function () {\n            cur_frm.set_value(\"taxes_and_charges\", \"MWST (302) - ITST\");\n        }, 5000);\n\t}\n});\n\nfunction add_timesheet_positions(frm) {\n    // get projects for this customer\n    frappe.call({\n        method: 'frappe.client.get_list',\n        args: {\n \t    doctype: 'Project',\n \t    filters: [\n \t        ['customer', '=', frm.doc.customer]\n \t    ],\n        fields: ['name'],\n      },\n      callback: function(response) {\n        var projects = [];\n        var project = null;\n        if (response.message.length > 0) { \n            for (var i = 0; i < response.message.length; i++) {\n                projects.push(response.message[i].name);\n            }\n            project = projects[0];\n        }\n        // show dialog for timespan\n        var now = new Date();\n        var from_date = new Date(now.getFullYear() - 1, 11, 1);\n        var to_date = new Date(now.getFullYear() - 1, 11, 31); \n        if (now.getMonth() > 0) {\n            from_date = new Date(now.getFullYear(), (now.getMonth() - 1), 1);\n            to_date = new Date(now.getFullYear(), now.getMonth(), 0);\n        } \n        frappe.prompt([\n                {'fieldname': 'from_date', 'fieldtype': 'Date', 'label': \"Von Datum\", 'reqd': 1, 'default': from_date},\n                {'fieldname': 'to_date', 'fieldtype': 'Date', 'label': \"Bis Datum\", 'reqd': 1, 'default': to_date},\n                {'fieldname': 'project', 'fieldtype': 'Select', 'label': \"Projekt\", 'reqd': 1, 'options': projects, 'default': project},\n                {'fieldname': 'show_effective_hrs', 'fieldtype': 'Check', 'label': \"Nicht verrechnete Stunden anzeigen\", 'default': 0}\n            ],\n            function(values){\n                // get all timesheets\n                console.log(\"fetch times...\");\n                frappe.call({\n                    method: 'itst.itst.utils.get_invoiceable_timesheets',\n                    args: {\n                 \t    'project': values.project,\n                 \t    'from_date': values.from_date,\n                 \t    'to_date': values.to_date\n                    },\n                    //async: false,\n                    callback: function(response) {\n                        var timesheets = response.message; \n                        //console.log(timesheets);\n                        var details = [];\n                        for (var i = 0; i < timesheets.length; i++) {\n                            // create item position\n                            var child = cur_frm.add_child('items');\n                            //console.log(\"Resultat get_employee_from_timesheet: \" + get_employee_from_timesheet(timesheets[i].timesheet));\n                            // Folgende Zeile wird asynchron durchgef\u00fchrt. L\u00e4sst sich nicht einrichten scheinbar.\n                            //frappe.db.get_doc('Timesheet', timesheets[i].timesheet).then(doc =>  console.log(\"Resultat DB-Direct: \" + doc.employee_name));\n                            frappe.db.get_value('Timesheet', timesheets[i].timesheet, 'employee_name').then(r => console.log(\"db.get_value: \" + r.message.employee_name));\n                            console.log(\"timesheet im loop: \" + timesheets[i].timesheet);\n                            frappe.model.set_value(child.doctype, child.name, 'item_code', timesheets[i].category || timesheets[i].activity_type);\n                            frappe.model.set_value(child.doctype, child.name, 'timesheet', timesheets[i].timesheet);\n                            frappe.model.set_value(child.doctype, child.name, 'ts_detail', timesheets[i].ts_detail);\n                            var description = timesheets[i].from_time.substring(0, 10) + \": \" +  timesheets[i].remarks;\n                            if ((values.show_effective_hrs === 1) && ((timesheets[i].hours || 0) > timesheets[i].billing_hours)) {\n                                description += \"<br>Effektive Stunden: \" + timesheets[i].hours;\n                            }\n                            details.push({'dt': child.doctype, 'dn': child.name, 'qty': timesheets[i].billing_hours, 'description': description});\n                        }\n                        cur_frm.refresh_field('items');\n                        // wait for all item fields to be set before populating description\n                        setTimeout(function () {\n                            for (var i = 0; i < details.length; i++) {\n                                frappe.model.set_value(details[i].dt, details[i].dn, 'description', details[i].description);\n                                frappe.model.set_value(details[i].dt, details[i].dn, 'qty', details[i].qty);\n                            }\n                            cur_frm.refresh_field('items');\n                        }, 1000);\n                    }\n                });\n            },\n            'Zeitraum',\n            'OK'\n        );\n      }\n    });\n}\n\nfunction override_email(frm) {\n    if (frm.doc.customer) {\n           frappe.call({\n            \"method\": \"frappe.client.get\",\n            \"args\": {\n                \"doctype\": \"Customer\",\n                \"name\": frm.doc.customer\n            },\n            \"callback\": function(response) {\n                var customer = response.message;\n                if (customer.rechnung_an) {\n                    cur_frm.set_value(\"contact_person\", customer.rechnung_an);\n                } \n            }\n        });\n    }\n}\n\nfunction custom_mail_dialog(frm) {\n    frappe.call({\n        \"method\": \"frappe.client.get\",\n        \"args\": {\n            \"doctype\": \"Customer\",\n            \"name\": frm.doc.customer\n        },\n        \"callback\": function(response) {\n            var customer = response.message;\n            var recipient = frm.doc.email || frm.doc.email_id || frm.doc.contact_email;\n            var cc = \"\";\n            new frappe.views.CommunicationComposer({\n    \t\t\tdoc: {\n    \t\t\t    doctype: frm.doc.doctype,\n    \t\t\t    name: frm.doc.name\n    \t\t\t},\n    \t\t\tsubject: \"Rechnung \" + frm.doc.name,\n    \t\t\trecipients: recipient,\n    \t\t\tcc: cc,\n    \t\t\tattach_document_print: 1,\n    \t\t\tmessage: get_email_body()\n    \t\t});\n        }\n    });\n}\n\nfunction get_email_body() {\n    return \"<div><span style=\\\"/*color: rgb(31, 73, 125);*/\\\">Sehr geehrte Damen und Herren</span></div>\"\n    + \"<div><br></div><div><span style=\\\"/*color: rgb(31, 73, 125);*/\\\">Als Beilage erhalten Sie unsere Rechnung.</span></div>\"\n    + \"<div<br><br></div>\"\n    + \"<div><br></div><div><span style=\\\"/*color: rgb(31, 73, 125);*/\\\">Freundliche Gr\u00fcsse</span></div></div>\"\n    + \"<div<br></div>\"\n    + (locals.email_footer || \"\");\n}\n\nfunction get_employee_from_timesheet(strTimeSheet) {\n    var strTS = strTimeSheet;\n    frappe.call({\n        \"method\": \"frappe.client.get\",\n        \"args\": {\n            \"doctype\": \"Timesheet\",\n            \"name\": strTS\n        },\n        async: false,\n        \"callback\": function(response) {\n           var timesheet = response.message;\n           \n            strTS = timesheet.employee_name;\n            console.log(\"Berechneter Wert: \" + strTS);\n            \n            } \n            \n        });\n    //setTimeout(() => {  console.log(\"Timeout over!\"); }, 5000);    \n    console.log(\"R\u00fcckgabewert: \" + strTS);\n    return strTS;\n}\n"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Contact",
+  "modified": "2022-02-14 10:24:50.651179",
+  "name": "Contact-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Contact', {\n    before_save: function(frm) {\n        if ((!frm.doc.letter_salutation) && (frm.doc.salutation) && (frm.doc.gender)) {\n            if (frm.doc.gender === \"Male\") {\n                cur_frm.set_value(\"letter_salutation\", \"Sehr geehrter \" + frm.doc.salutation + \" \" + frm.doc.last_name);\n            } else if (frm.doc.gender === \"Female\") {\n                cur_frm.set_value(\"letter_salutation\", \"Sehr geehrte \" + frm.doc.salutation + \" \" + frm.doc.last_name);\n            }\n        }\n    }\n});"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Customer",
+  "modified": "2022-02-14 12:03:06.741815",
+  "name": "Customer-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "// global\ncur_frm.dashboard.add_transactions([\n    {\n        'label': 'ITST',\n        'items': ['Dokument', 'Gespraechsnotiz']\n    } \n]);\n\nfrappe.ui.form.on('Customer Stakeholder', {\n\tcontact(frm, cdt, cdn) {\n\t\tfrappe.call({\n            'method': \"frappe.client.get\",\n            'args': {\n                'doctype': \"Contact\",\n                'name': frappe.model.get_value(cdt, cdn, 'contact')\n            },\n            'callback': function(response) {\n                var contact = response.message;\n\n                if (contact) {\n                    frappe.model.set_value(cdt, cdn, 'email', contact.email_id);\n                    frappe.model.set_value(cdt, cdn, 'phone', contact.phone);\n                } \n            }\n        });\n\t\t\n\t}\n});"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Gespraechsnotiz",
+  "modified": "2022-02-14 12:12:20.197437",
+  "name": "Gespraechsnotiz-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Gespraechsnotiz', {\n\tbefore_save(frm) {\n\t\tcur_frm.set_value(\"short_remarks\", frm.doc.remarks.replace(/<\\/?[^>]+(>|$)/g, \"\").substring(0, 140));\n\t}\n});"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Project",
+  "modified": "2022-02-14 13:38:32.016326",
+  "name": "Project-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Project', {\n\trefresh(frm) {\n\t    // display notes at the top\n\t\tif (frm.doc.notes) {\n\t\t    cur_frm.dashboard.add_comment( frm.doc.notes , 'green', true);\n\t\t    \n\t\t    var elements = document.getElementsByClassName(\"green\");\n\t\t    for (var i = 0; i < elements.length; i++) {\n\t\t        elements[i].style.setProperty('color', 'dimgray', 'important');\n\t\t    }\n\t\t}\n\t}\n});"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Purchase Invoice",
+  "modified": "2022-02-14 16:06:01.648623",
+  "name": "Purchase Invoice-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Purchase Invoice', {\n\trefresh(frm) {\n\t\tif (frm.doc.docstatus === 0) {\n\t\t    frm.add_custom_button(__(\"Projekt\"), function() {\n                frappe.prompt([\n                    {'fieldname': 'project', 'fieldtype': 'Link', 'options': 'Project', 'label': __('Project'), 'reqd': 1}  \n                ],\n                function(values){\n                    for (var i = 0; i < cur_frm.doc.items.length; i++) {\n                        frappe.model.set_value(cur_frm.doc.items[i].doctype, cur_frm.doc.items[i].name, 'project', values.project);\n                    }\n                    frappe.show_alert(__(\"Updated\"));\n                },\n                __('Project'),\n                'OK'\n                );\n            });\n\t\t}\n\t}\n});"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Opportunity",
+  "modified": "2022-05-26 17:34:45.886519",
+  "name": "Opportunity-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Opportunity', {\n    sales_stage(frm) {\n\t\tif (frm.doc.sales_stage.startsWith(\"1\")) {\n\t\t    cur_frm.set_value(\"probability\", 10);\n\t\t} else if (frm.doc.sales_stage.startsWith(\"2\")) {\n\t\t    cur_frm.set_value(\"probability\", 20);\n\t\t} else if (frm.doc.sales_stage.startsWith(\"3\")) {\n\t\t    cur_frm.set_value(\"probability\", 30);\n\t\t} else if (frm.doc.sales_stage.startsWith(\"4\")) {\n\t\t    cur_frm.set_value(\"probability\", 50);\n\t\t} else if (frm.doc.sales_stage.startsWith(\"5\")) {\n\t\t    cur_frm.set_value(\"probability\", 65);\n\t\t} else if (frm.doc.sales_stage.startsWith(\"6\")) {\n\t\t    cur_frm.set_value(\"probability\", 80);\n\t\t} else if (frm.doc.sales_stage.startsWith(\"7\")) {\n\t\t    cur_frm.set_value(\"probability\", 0);\n\t\t}\n\t},\n\tzammad_ticket(frm) {\n        show_zammad_link(frm);\n    },\n\trefresh(frm) {\n\t\tshow_zammad_link(frm);\n    }\n});\n\nfunction show_zammad_link(frm) {\n\tif (frm.doc.zammad_ticket) {\n    \tvar wrapper = cur_frm.fields_dict.zammad_link_html.wrapper;\n\t\t$(wrapper).empty();\n\t\t$('<a href=\"' + frm.doc.zammad_ticket + '\" target=\"_blank\">Ticket \u00f6ffnen</a>').appendTo(wrapper);\n    }\n}"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Sales Partner",
+  "modified": "2022-03-03 15:58:53.842314",
+  "name": "Sales Partner-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Sales Partner', {\n\trefresh(frm) {\n\t\tfrm.add_custom_button(__(\"Kommissionsabrechnung\"), function() {\n            frappe.set_route(\"query-report\", \"Kommissionsberechnung\", {'sales_partner': frm.doc.name});\n        });\n\t}\n});"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Terms and Conditions",
+  "modified": "2022-03-10 16:57:46.583323",
+  "name": "Terms and Conditions-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Terms and Conditions', {\n\thtml_raw(frm) {\n\t    if (!locals.is_internal_html) {\n\t        cur_frm.set_value(\"terms\", frm.doc.html_raw);\n\t    } else {\n\t        locals.is_internal_html = false;\n\t    }\n\t},\n\trefresh(frm) {\n\t    cur_frm.set_value(\"html_raw\", frm.doc.terms);\n\t    locals.is_internal_html = true;\n\t}\n});"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Lead",
+  "modified": "2022-03-18 19:39:20.315934",
+  "name": "Lead-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Lead', {\n    zammad_ticket(frm) {\n        show_zammad_link(frm);\n    },\n\trefresh(frm) {\n\t\tshow_zammad_link(frm);\n    }\n});\n\nfunction show_zammad_link(frm) {\n\tif (frm.doc.zammad_ticket) {\n    \tvar wrapper = cur_frm.fields_dict.zammad_link_html.wrapper;\n\t\t$(wrapper).empty();\n\t\t$('<a href=\"' + frm.doc.zammad_ticket + '\" target=\"_blank\">Ticket \u00f6ffnen</a>').appendTo(wrapper);\n    }\n}"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Quotation",
+  "modified": "2022-04-11 22:25:08.856118",
+  "name": "Quotation-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Quotation', {\n\trefresh(frm) {\n\t\t// your code here\n\t},\n\ton_submit(frm) {\n\t    frappe.call({\n          'method': 'itst.itst.utils.create_combined_pdf',\n          'args':{\n            'dt': 'Quotation',\n            'dn': frm.doc.name,\n            'print_format': 'Offerte'\n          },\n            'callback': function(response) {\n                cur_frm.reload_doc();\n            }\n        });\n\t},\n\tvorlage_eingangstext(frm) {\n\t    if (frm.doc.vorlage_eingangstext) {\n\t        frappe.call({\n                'method': \"frappe.client.get\",\n                'args': {\n                    \"doctype\": \"Terms and Conditions\",\n                    \"name\": frm.doc.vorlage_eingangstext\n                },\n                'callback': function(response) {\n                    var vorlage = response.message;\n                    if (vorlage) {\n                       cur_frm.set_value(\"eingangstext\", vorlage.terms);\n                    } \n                }\n            });\n\t    }\n\t}\n});"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Expense Claim",
+  "modified": "2022-04-11 14:33:58.020638",
+  "name": "Expense Claim-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Expense Claim', {\n    on_submit: function (frm) {\n        create_pretax_journal_entry(frm);\n    },\n    before_cancel: function (frm) {\n        cancel_pretax_journal_entry(frm);  \n    },\n    before_save: function(frm) {\n        total_pretax(frm);\n    }\n});\n\nfunction total_pretax(frm) {\n    var total_pretax = 0.0;\n    for (var i = 0; i < frm.doc.expenses.length; i++) {\n        total_pretax += frm.doc.expenses[i].vorsteuer;\n    }\n    cur_frm.set_value('total_pretax', total_pretax);\n}\n\nfunction create_pretax_journal_entry(frm) {\n    frappe.call({\n        method: 'erpnextswiss.erpnextswiss.expenses.expense_pretax_various',\n        args: {\n            expense_claim: frm.doc.name\n        },\n        callback: function(r) {\n            if (r.message) {\n                frappe.show_alert(\"Vorsteuer angerechnet: \" + r.message.name);\n                cur_frm.reload_doc();\n            } \n        }\n    });\n}\n\nfunction cancel_pretax_journal_entry(frm) {\n    if (frm.doc.pretax_record) {\n        frappe.call({\n            method: 'erpnextswiss.erpnextswiss.expenses.cancel_pretax',\n            args: {\n                expense_claim: frm.doc.name\n            },\n            callback: function(r) {\n                if (r.message) {\n                    frappe.show_alert(\"Vorsteuerdatensatz storniert. \" + frm.doc.pretax_record);\n                } \n            }\n        });\n    }\n}"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Task",
+  "modified": "2022-05-29 20:09:56.629212",
+  "name": "Task-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Task', {\n\trefresh(frm) {\n\t\tif (!frm.doc.__islocal) {\n\t\t    frm.add_custom_button(__('Zugeh\u00f6rige Zammad-Tickets'), function() {\n            \twindow.open(\"https://support.itst.ch/#search/\" + frm.doc.name, '_blank').focus();\n            }).addClass(\"btn-primary\");\n\t\t}\n\t}\n});\n"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Delivery Note",
+  "modified": "2022-06-28 21:50:53.598840",
+  "name": "Delivery Note-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Delivery Note', {\n\ton_submit(frm) {\n\t    check_create_accrual(frm, ['WJ-Liz'], '3300 - STP Lizenzerl\u00f6s - ITST', '2230 - KK STP - ITST');\n\t},\n\tafter_cancel(frm) {\n\t    cancel_accrual(frm);\n\t}\n});\n\nfunction check_create_accrual(frm, items, debit, credit) {\n    var accrual_ratio = 0.6;        // 60%\n    var accrual_amount = 0;\n    // get amount\n    (frm.doc.items || []).forEach(function (item) {\n        if (items.includes(item.item_code)) {\n            accrual_amount += (item.base_net_amount * accrual_ratio);\n        }\n    });\n    if (accrual_amount > 0) {\n        frappe.call({\n           'method': \"itst.itst.utils.create_accrual_jv\",\n           'args': {\n                'amount': accrual_amount,\n                'debit_account': debit,\n                'credit_account': credit,\n                'date': frm.doc.posting_date,\n                'remarks': 'R\u00fcckstellung zu Rechnung ' + frm.doc.name,\n                'document': frm.doc.name\n           },\n           callback: function(response) {\n                frappe.show_alert( __(\"Buchungssatz f\u00fcr R\u00fcckstellung erstellt: <a href='/desk#Form/Journal Entry/\" + \n                    response.message + \"'>\" + response.message + \"</a>\"));\n           }\n        });\n    }\n}\n\nfunction cancel_accrual(frm) {\n    frappe.call({\n       'method': \"itst.itst.utils.cancel_accrual_jv\",\n       'args': {\n            'date': frm.doc.posting_date,\n            'document': frm.doc.name\n       },\n       callback: function(response) {\n            frappe.show_alert( __(\"Buchungssatz f\u00fcr R\u00fcckstellung storniert: <a href='/desk#Form/Journal Entry/\" + \n                response.message + \"'>\" + response.message + \"</a>\"));\n       }\n    });\n}"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Payment Entry",
+  "modified": "2022-07-14 10:10:10.791285",
+  "name": "Payment Entry-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Payment Entry', {\n\trefresh(frm) {\n\t\tif (frm.doc.docstatus === 0) {\n            frm.add_custom_button(__(\"L\u00f6hne\"), function() {\n                deduct_to_salary(frm);\n            }, __(\"Ausbuchen\"));\n            frm.add_custom_button(__(\"Spesen des Geldverkehrs\"), function() {\n                deduct_to_exchange(frm);\n            }, __(\"Ausbuchen\"));\n        }\n\t}\n});\n\nfunction deduct_to_salary(frm) {\n    add_deduction(\"1099 - Lohndurchlaufskonto - ITST\", \"Main - ITST\", frm.doc.unallocated_amount || frm.doc.difference_amount);\n}\n\nfunction deduct_to_exchange(frm) {\n    add_deduction(\"6900 - Finanzaufwand - ITST\", \"Main - ITST\", frm.doc.unallocated_amount || frm.doc.difference_amount);\n}\n\nfunction add_deduction(account, cost_center, amount) {\n    var child = cur_frm.add_child('deductions');\n    frappe.model.set_value(child.doctype, child.name, 'account', account);\n    frappe.model.set_value(child.doctype, child.name, 'cost_center', cost_center);\n    frappe.model.set_value(child.doctype, child.name, 'amount', amount);\n}"
+ }
+]
