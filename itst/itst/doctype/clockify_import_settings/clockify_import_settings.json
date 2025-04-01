@@ -7,7 +7,7 @@
   "workspace_id",
   "api_key",
   "column_break",
-  "tags_id",
+  "imported_tag_id",
   "clockify_url",
   "section_break",
   "user_mapping",
@@ -32,13 +32,6 @@
   {
    "fieldname": "column_break",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "tags_id",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Tag Id",
-   "reqd": 1
   },
   {
    "fieldname": "section_break",
@@ -66,10 +59,17 @@
    "fieldtype": "Table",
    "label": "Tags",
    "options": "Clockify Tag Table"
+  },
+  {
+   "fieldname": "imported_tag_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Imported Tag",
+   "reqd": 1
   }
  ],
  "issingle": 1,
- "modified": "2025-04-01 12:07:43.237394",
+ "modified": "2025-04-01 14:53:37.259644",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Clockify Import Settings",
