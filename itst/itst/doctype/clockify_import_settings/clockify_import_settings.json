@@ -65,11 +65,11 @@
    "fieldname": "tags_mapping",
    "fieldtype": "Table",
    "label": "Tags",
-   "options": "Clockify Tag Table"
+   "options": "Clockify Tag to Artikel"
   }
  ],
  "issingle": 1,
- "modified": "2025-04-01 15:01:07.064972",
+ "modified": "2025-04-02 15:37:04.345678",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Clockify Import Settings",
