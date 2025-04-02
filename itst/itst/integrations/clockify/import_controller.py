@@ -98,6 +98,33 @@ def update_clockify_tag(
     }
     clockify_service.update_clockify_entry(entry["id"], clockify_update_data )
 
+def get_kostenstelle(entry: Dict) -> str:
+    """
+    Compares imported Tag id with documents form Doctype Kostenstelle.
+
+    Args:
+        entry (Dict): The full time entry dictionary form Clockify.
+    Returns:
+        str: The string of the Kostenstelle
+    """
+    
+    kostenstellen_docs = frappe.get_all("Kostenstellen", fields=["tag_id", "kostenstellen"]) 
+
+    default_company = frappe.defaults.get_global_default("company")
+    company_abbr = frappe.get_value("Company", default_company, "abbr")
+
+    clockify_entry_tags = entry.get("tags", [])
+
+    for row in kostenstellen_docs:
+        for clockify_tag in clockify_entry_tags:
+            if (row.tag_id == clockify_tag.get("id")):
+                suffix = f" - {company_abbr}"
+                if row.kostenstellen.endswith(suffix):
+                    return row.kostenstellen[:-len(suffix)]
+                return None
+
+    return None
+
 def build_timesheet_detail_data(
     entry: Dict,
     dienstleistungs_artikel: str,
@@ -123,12 +150,15 @@ def build_timesheet_detail_data(
     billing_rate = entry["hourlyRate"]["amount"] / 100
     billing_amount = billing_rate * time_data["duration_hours"]
 
+    kostenstellen = get_kostenstelle(entry)
+
     timesheet_detail_data = {
         "activity_type": activity_type,
         "from_time": time_data["from_time_str"],
         "to_time": time_data["to_time_str"],
         "duration": time_data["duration_rounded_hhmm"],
         "hours": time_data["duration_hours"],
+        "kategorie": kostenstellen,
         "project": project_name,
         "billable": entry["billable"],
         "billing_duration": time_data["duration_rounded_hhmm"],
