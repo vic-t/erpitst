@@ -83,14 +83,18 @@ def update_clockify_tag(
     Args:
         clockify_service (ClockifyService): The service instance to interact with Clockify.
         entry (Dict): The full time entry dictionary form Clockify.
-        clockify_imported_tag_id (str): The tag Id to be added to the time entry
-    """
+        clockify_imported_tag_id (str): The Tag Id that indicates, the time entrie is imported
+    """   
+    tag_ids = entry.get("tagIds")
+
+    tag_ids.append(clockify_imported_tag_id)
+
     clockify_update_data = {
         "description": entry.get("description", "No description"),
         "end": entry["timeInterval"]["end"],
         "projectId": entry["projectId"],
         "start": entry["timeInterval"]["start"],
-        "tagIds": [clockify_imported_tag_id]
+        "tagIds": tag_ids
     }
     clockify_service.update_clockify_entry(entry["id"], clockify_update_data )
 
