@@ -1,0 +1,69 @@
+{
+ "autoname": "field:tag_name",
+ "creation": "2025-04-01 14:10:53.851950",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tag_name",
+  "tag_id",
+  "kostenstellen",
+  "column_break_4",
+  "standartwert"
+ ],
+ "fields": [
+  {
+   "fieldname": "tag_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tag name",
+   "unique": 1
+  },
+  {
+   "fieldname": "tag_id",
+   "fieldtype": "Data",
+   "label": "Tag Id"
+  },
+  {
+   "fieldname": "kostenstellen",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Kostenstellen",
+   "options": "Cost Center"
+  },
+  {
+   "default": "0",
+   "fieldname": "standartwert",
+   "fieldtype": "Check",
+   "label": "Standartwert"
+  },
+  {
+   "default": "0",
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "modified": "2025-04-02 11:35:51.325240",
+ "modified_by": "Administrator",
+ "module": "ITST",
+ "name": "Kostenstellen",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
