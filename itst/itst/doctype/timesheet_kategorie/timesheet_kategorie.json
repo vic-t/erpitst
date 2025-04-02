@@ -1,33 +1,19 @@
 {
- "autoname": "field:tag_name",
+ "autoname": "field:kategorie",
  "creation": "2025-04-01 14:10:53.851950",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "tag_name",
-  "tag_id",
   "kostenstellen",
-  "column_break_4",
+  "kategorie",
+  "column_break_3",
   "standartwert"
  ],
  "fields": [
   {
-   "fieldname": "tag_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Tag name",
-   "unique": 1
-  },
-  {
-   "fieldname": "tag_id",
-   "fieldtype": "Data",
-   "label": "Tag Id"
-  },
-  {
    "fieldname": "kostenstellen",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Kostenstellen",
    "options": "Cost Center"
   },
@@ -38,15 +24,20 @@
    "label": "Standartwert"
   },
   {
-   "default": "0",
-   "fieldname": "column_break_4",
+   "fieldname": "kategorie",
+   "fieldtype": "Data",
+   "label": "Kategorie",
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_3",
    "fieldtype": "Column Break"
   }
  ],
- "modified": "2025-04-02 11:35:51.325240",
+ "modified": "2025-04-02 13:59:32.806846",
  "modified_by": "Administrator",
  "module": "ITST",
- "name": "Kostenstellen",
+ "name": "Timesheet Kategorie",
  "owner": "Administrator",
  "permissions": [
   {
