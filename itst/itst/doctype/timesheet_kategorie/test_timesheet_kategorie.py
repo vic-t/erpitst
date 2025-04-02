@@ -6,5 +6,5 @@ from __future__ import unicode_literals
 # import frappe
 import unittest
 
-class TestTimesheet Kategorie(unittest.TestCase):
+class TestTimesheetKategorie(unittest.TestCase):
 	pass

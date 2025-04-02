@@ -1,6 +1,6 @@
 {
  "autoname": "field:kategorie",
- "creation": "2025-04-01 14:10:53.851950",
+ "creation": "2025-04-02 16:51:23.698112",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -18,23 +18,24 @@
    "options": "Cost Center"
   },
   {
-   "default": "0",
-   "fieldname": "standartwert",
-   "fieldtype": "Check",
-   "label": "Standartwert"
-  },
-  {
    "fieldname": "kategorie",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Kategorie",
+   "options": "Clockify Tag to Kategorie",
    "unique": 1
   },
   {
    "fieldname": "column_break_3",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "standartwert",
+   "fieldtype": "Check",
+   "label": "Standartwert"
   }
  ],
- "modified": "2025-04-02 13:59:32.806846",
+ "modified": "2025-04-02 16:51:23.698112",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Timesheet Kategorie",
