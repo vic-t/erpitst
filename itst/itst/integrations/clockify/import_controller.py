@@ -362,8 +362,6 @@ def import_clockify_entries_to_timesheet(
                 imported_entries_count += 1
         except Exception as e:
             frappe.db.rollback()
-            error_message = f"Eintrag {entry.get('id')} | Fehler: {str(e)}"
-            frappe.log_error(message=error_message, title="Clockify Import Fehler")
             error_count += 1
             failed_entries_info.append(f"Eintrag {entry.get('id')}: {str(e)}")
 
@@ -371,7 +369,7 @@ def import_clockify_entries_to_timesheet(
         error_log_link = build_html_link(f"{base_url}/desk#List/Error%20Log/List", "Error log")
         frappe.log_error(
             title="Clockify Import Error",
-            message="Der Import der Zeiteinträge war nicht vollständig erfolgreich. Bitte loggen Sie sich in Clockify ein und überprüfen Sie alle Zeiteinträge, bei denen kein Tag vorhanden ist (in ERP). Vergleichen Sie jeweils, ob der Projektname mit dem in ERPNext übereinstimmt. Falls Sie Anpassungen an einem Timesheet vornehmen müssen, entfernen Sie bitte den Tag, damit der Zeiteintrag problemlos importiert werden kann. Bei weiteren Fragen oder für genauere Anleitungen schauen Sie bitte im Wiki nach."
+            message=f"Der Import der Zeiteinträge war nicht vollständig erfolgreich. Bitte loggen Sie sich in Clockify ein und überprüfen Sie alle Zeiteinträge, bei denen kein Tag vorhanden ist (in ERP). Vergleichen Sie jeweils, ob der Projektname mit dem in ERPNext übereinstimmt. Falls Sie Anpassungen an einem Timesheet vornehmen müssen, entfernen Sie bitte den Tag, damit der Zeiteintrag problemlos importiert werden kann. Bei weiteren Fragen oder für genauere Anleitungen schauen Sie bitte im Wiki nach. \n {failed_entries_info}"
         )
 
         frappe.throw(
