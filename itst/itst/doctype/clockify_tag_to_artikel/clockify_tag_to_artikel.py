@@ -7,4 +7,6 @@ from __future__ import unicode_literals
 from frappe.model.document import Document
 
 class ClockifyTagtoArtikel(Document):
-	pass
+	def autoname(self):
+		artikel = self.artikel or "None"
+		self.name = artikel
