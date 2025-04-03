@@ -19,3 +19,25 @@ frappe.ui.form.on('Customer', {
         }
     }
 });
+
+
+frappe.ui.form.on('Customer Stakeholder', {
+	contact(frm, cdt, cdn) {
+		frappe.call({
+            'method': "frappe.client.get",
+            'args': {
+                'doctype': "Contact",
+                'name': frappe.model.get_value(cdt, cdn, 'contact')
+            },
+            'callback': function(response) {
+                var contact = response.message;
+ 
+                if (contact) {
+                    frappe.model.set_value(cdt, cdn, 'email', contact.email_id);
+                    frappe.model.set_value(cdt, cdn, 'phone', contact.phone);
+                } 
+            }
+        });
+ 
+	}
+});

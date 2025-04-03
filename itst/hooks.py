@@ -35,7 +35,18 @@ doctype_js = {
     "Timesheet" : "public/js/timesheet.js",
     "Project" : "public/js/project.js",
     "Delivery Note" : "public/js/delivery_note.js",
-    "Task" : "public/js/task.js"
+    "Task" : "public/js/task.js",
+    "Sales Partner" : "public/js/sales_partner.js",
+    "Sales Invoice" : "public/js/sales_invoice.js",
+    "Payment Entry" : "public/js/payment_entry.js",
+    "Opportunity" : "public/js/opportunity.js",
+    "Quotation" : "public/js/quotation.js",
+    "Expense Claim" : "public/js/expense_claim.js",
+    "Lead" : "public/js/lead.js",
+    "Terms and Conditions" : "public/js/terms_and_conditions.js",
+    "Purchase Invoice" : "public/js/purchase_invoice.js",
+    "Contact" : "public/js/contact.js",
+    "Address" : "public/js/address.js"
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
