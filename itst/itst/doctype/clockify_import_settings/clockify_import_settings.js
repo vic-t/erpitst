@@ -60,21 +60,24 @@ frappe.ui.form.on('Clockify Import Settings', {
 					  fieldtype: 'Select',
 					  label: 'Mitarbeiter Auswählen',
 					  options: user_options,  
-					  reqd: 1
+					  reqd: 1,
+					  default: ""
 					},
 					{
 					  fieldname: 'activity_type',
 					  fieldtype: 'Select',
 					  label: 'Aktivität Typ',
 					  options: activity_type_options,  
-					  reqd: 1
+					  reqd: 1,
+					  default: ""
 					},
 					{
 					  fieldname: 'dienstleistungs_artikel',
 					  fieldtype: 'Select',
 					  label: 'Dienstleistungsartikel',
 					  options: dienstleistungs_artikel_options,  
-					  reqd: 1
+					  reqd: 1,
+					  default: ""
 					},
 					{
 					  fieldname: 'start_time',
