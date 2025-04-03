@@ -98,32 +98,34 @@ def update_clockify_tag(
     }
     clockify_service.update_clockify_entry(entry["id"], clockify_update_data )
 
-def get_kostenstelle(entry: Dict) -> str:
+def get_timesheet_kategorie_from_entry(entry: Dict) -> str:
     """
-    Compares imported Tag id with documents form Doctype Kostenstelle.
+    Determines the appropriate timesheet category for a Timesheet entry.
 
     Args:
         entry (Dict): The full time entry dictionary form Clockify.
     Returns:
-        str: The string of the Kostenstelle
+        str: The string of the Kategorie
     """
+        
+    clockify_entry_tags = [tag.get("id") for tag in entry.get("tags", [])]
     
-    kostenstellen_docs = frappe.get_all("Kostenstellen", fields=["tag_id", "kostenstellen"]) 
+    mapping_docs = frappe.get_list(
+        "Clockify Tag to Kategorie",
+        fields=["name", "kategorie"]
+    )
+    
+    for mapping in mapping_docs:
+        mapping_doc = frappe.get_doc("Clockify Tag to Kategorie", mapping.name)
 
-    default_company = frappe.defaults.get_global_default("company")
-    company_abbr = frappe.get_value("Company", default_company, "abbr")
+        for child in mapping_doc.get("tag_id"):
+            child_tag_id = child.tag_id  
 
-    clockify_entry_tags = entry.get("tags", [])
+            if child_tag_id in clockify_entry_tags:
+                return mapping_doc.kategorie
 
-    for row in kostenstellen_docs:
-        for clockify_tag in clockify_entry_tags:
-            if (row.tag_id == clockify_tag.get("id")):
-                suffix = f" - {company_abbr}"
-                if row.kostenstellen.endswith(suffix):
-                    return row.kostenstellen[:-len(suffix)]
-                return None
-
-    return None
+    default_kategorie = frappe.get_value("Timesheet Kategorie", {"standartwert": 1}, "name")
+    return default_kategorie
 
 def build_timesheet_detail_data(
     entry: Dict,
@@ -150,7 +152,7 @@ def build_timesheet_detail_data(
     billing_rate = entry["hourlyRate"]["amount"] / 100
     billing_amount = billing_rate * time_data["duration_hours"]
 
-    kostenstellen = get_kostenstelle(entry)
+    kostenstellen = get_timesheet_kategorie_from_entry(entry)
 
     timesheet_detail_data = {
         "activity_type": activity_type,
