@@ -10,9 +10,7 @@
   "imported_tag_id",
   "clockify_url",
   "section_break",
-  "user_mapping",
-  "section_break_8",
-  "tags_mapping"
+  "user_mapping"
  ],
  "fields": [
   {
@@ -51,25 +49,15 @@
    "reqd": 1
   },
   {
-   "fieldname": "section_break_8",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "imported_tag_id",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Imported Tag",
    "reqd": 1
-  },
-  {
-   "fieldname": "tags_mapping",
-   "fieldtype": "Table",
-   "label": "Tags",
-   "options": "Clockify Tag to Artikel"
   }
  ],
  "issingle": 1,
- "modified": "2025-04-02 15:37:04.345678",
+ "modified": "2025-04-03 15:17:19.104400",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Clockify Import Settings",
