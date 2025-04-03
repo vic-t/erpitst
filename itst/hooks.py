@@ -149,3 +149,13 @@ scheduler_events = {
 # 	"Task": "itst.task.get_dashboard_data"
 # }
 
+fixtures = [{
+        "doctype": "Custom Field",
+    },
+    {
+        "doctype": "Property Setter",
+    },
+    {
+        "doctype": "Custom Script",
+    }
+]
