@@ -41,7 +41,7 @@ def run_clockify_import(user_mapping_name: str, clockify_start_time: str, clocki
         workspace_id = clockify_workspace_id,
     )
 
-    timesheet_service = ERPNextTimesheetService(company="ITST")
+    timesheet_service = ERPNextTimesheetService(company="ITST Gmbh")
 
     import_clockify_entries_to_timesheet(
         timesheet_service,
