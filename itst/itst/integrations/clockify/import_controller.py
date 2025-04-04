@@ -188,18 +188,17 @@ def get_timesheet_kategorie_from_entry(entry: Dict) -> str:
 
 def build_timesheet_detail_data(
     entry: Dict,
-    activity_type: str,
     ) -> Dict:
     """
     Construct a dictionary of fields for a Timesheet Detail entry in ERPNext based on a Clockify time entry.
 
     Args:
         entry (Dict): The Clockify time entry.
-        activity_type (str): The Activity Type associated with the kind of service provided.
-
     Returns:
         Dict: A dictionary with keys matching Timesheet Detail fields.
     """
+
+    activity_type = "Clockify-Import"
 
     time_data = _calculate_times(entry)
 
@@ -258,7 +257,6 @@ def process_clockify_entry_to_erpnext(
     entry: Dict,
     employee_id: str,
     employee_name: str,
-    activity_type: str,
     clockify_imported_tag_id: str,
     clockify_service: ClockifyService,
     timesheet_service: ERPNextTimesheetService,
@@ -272,7 +270,6 @@ def process_clockify_entry_to_erpnext(
         entry (Dicts): The single Clockify time entry dictionary.
         employee_id (str): The ERPNext employee ID.
         employee_name (str): The employee's name in ERPNext.
-        activity_type (str): The Activity Type associated with the kind of service provided.
         clockify_imported_tag_id (str): The tag Id to be set on the Clockify entry.
         clockify_service (ClockifyService): The service to interact with Clockify.
         timesheet_service (ERPNextTimesheetService): The service to interact with ERPNext Timesheets.
@@ -285,8 +282,7 @@ def process_clockify_entry_to_erpnext(
     timesheet_name = timesheet_service.find_timesheet(timesheet_title)
 
     timesheet_detail_data = build_timesheet_detail_data(
-        entry,
-        activity_type,
+        entry
     )
 
     if timesheet_name:
@@ -312,7 +308,6 @@ def import_clockify_entries_to_timesheet(
     clockify_user_id: str,
     clockify_imported_tag_id: str,
     employee_name: str,
-    activity_type: str,
     employee_id: str,
     clockify_start_time: str,
     clockify_end_time: str,
@@ -328,7 +323,6 @@ def import_clockify_entries_to_timesheet(
         clockify_user_id (str): The Clockify user ID whose entries are to be fetched.
         clockify_imported_tag_id (str): The tag Id to be set on the Clockify entry.
         employee_name (str): The employee's name in ERPNext.
-        activity_type (str): The Activity Type associated with the kind of service provided.
         employee_id (str): The ERPNext employee ID.
         clockify_start_time (str): Start date and time for time entries import.
         clockify_end_time (str): End date and time for time entries import.
@@ -373,7 +367,6 @@ def import_clockify_entries_to_timesheet(
                 entry,
                 employee_id,
                 employee_name,
-                activity_type,
                 clockify_imported_tag_id,
                 clockify_service,
                 timesheet_service,

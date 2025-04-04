@@ -16,91 +16,46 @@ frappe.ui.form.on('Clockify Import Settings', {
 		  if (user_options.length === 0) {
 			frappe.msgprint("No user mappings found.");
 			return;
-		  }
-  
-		  frappe.call({
-			method: 'frappe.client.get_list',
-			args: {
-			  doctype: 'Activity Type',
-			  filters: {
-				disabled: 0  
-			  },
-			  fields: ['name as value', 'activity_type as label'],
-			  order_by: 'activity_type ASC',
-			  limit_page_length: 100  
+		  } 
+		  frappe.prompt([
+			{
+			  fieldname: 'selected_user_mapping',
+			  fieldtype: 'Select',
+			  label: 'Mitarbeiter Auswählen',
+			  options: user_options,  
+			  reqd: 1,
+			  default: ""
 			},
-			callback: function(r) {
-			  let activity_type_options = r.message || [];
-			  if (!activity_type_options.length) {
-				frappe.msgprint("No active activity types found.");
-				return;
-			  }
-  
-			  frappe.call({
-				method: 'frappe.client.get_list',
-				args: {
-				  doctype: 'Item',
-				  filters: {
-					disabled: 0
-				  },
-				  fields: ['item_code as value', 'item_name as label'],
-				  order_by: 'item_name ASC',
-				  limit_page_length: 100
-				},
-				callback: function(r2) {
-  
-				  frappe.prompt([
-					{
-					  fieldname: 'selected_user_mapping',
-					  fieldtype: 'Select',
-					  label: 'Mitarbeiter Auswählen',
-					  options: user_options,  
-					  reqd: 1,
-					  default: ""
-					},
-					{
-					  fieldname: 'activity_type',
-					  fieldtype: 'Select',
-					  label: 'Aktivität Typ',
-					  options: activity_type_options,  
-					  reqd: 1,
-					  default: ""
-					},
-					{
-					  fieldname: 'start_time',
-					  fieldtype: 'Datetime',
-					  label: 'Import Start Datum', 
-					  reqd: 1
-					},
-					{
-					  fieldname: 'end_time',
-					  fieldtype: 'Datetime',
-					  label: 'Import End Datum', 
-					  reqd: 1
-					},
-				  ],
-				  function(values) {
-					frappe.call({
-					  method: "itst.itst.integrations.clockify.run_clockify_import.run_clockify_import",
-					  args: {
-						user_mapping_name: values.selected_user_mapping,
-						activity_type: values.activity_type,
-						clockify_start_time: values.start_time,
-						clockify_end_time: values.end_time
-					  },
-					  callback: function(r) {
-					  }
-					});
-  
-					console.log("Selected user: " + values.selected_user_mapping);
-					console.log("Activity type: " + values.activity_type);
-				  },
-				  __('Import Auswahl'),
-				  __('Import'));
-				}
-			  });
+			{
+			  fieldname: 'start_time',
+			  fieldtype: 'Datetime',
+			  label: 'Import Start Datum', 
+			  reqd: 1
+			},
+			{
+			  fieldname: 'end_time',
+			  fieldtype: 'Datetime',
+			  label: 'Import End Datum', 
+			  reqd: 1
 			}
-		  });
+		  ],
+		  function(values) {
+			frappe.call({
+			  method: "itst.itst.integrations.clockify.run_clockify_import.run_clockify_import",
+			  args: {
+				user_mapping_name: values.selected_user_mapping,
+				clockify_start_time: values.start_time,
+				clockify_end_time: values.end_time
+			  },
+			  callback: function(r) {
+				// optional: Rückmeldung an den Nutzer
+			  }
+			});
+  
+			console.log("Selected user: " + values.selected_user_mapping);
+		  },
+		  __('Import Auswahl'),
+		  __('Import'));
 		});
 	  }
 	}

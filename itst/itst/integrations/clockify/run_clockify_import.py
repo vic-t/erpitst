@@ -4,13 +4,12 @@ from .erpnext_timesheet_service import ERPNextTimesheetService
 from .import_controller import import_clockify_entries_to_timesheet
 
 @frappe.whitelist()
-def run_clockify_import(user_mapping_name: str, activity_type: str, clockify_start_time: str, clockify_end_time: str):
+def run_clockify_import(user_mapping_name: str, clockify_start_time: str, clockify_end_time: str):
     """
     Whitelisted method to import Clockify entries into ERPNext Timesheet based on user selection.
 
     Args:
         user_mapping_name (str): The ERPNext employee Id, ERPNext employee name and the Clockify user Id mapped.
-        activity_type (str): The Activity Type associated with the kind of service provided.
         clockify_start_time (str): Start date and time for time entries import. 
         clockify_end_time (str): End date and time for time entries import. 
 
@@ -50,7 +49,6 @@ def run_clockify_import(user_mapping_name: str, activity_type: str, clockify_sta
         clockify_user_id,
         clockify_imported_tag_id,
         erpnext_employee_name,
-        activity_type,
         erpnext_employee_id,
         clockify_start_time,
         clockify_end_time,
