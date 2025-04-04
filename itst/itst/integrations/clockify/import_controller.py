@@ -100,56 +100,56 @@ def update_clockify_tag(
     }
     clockify_service.update_clockify_entry(entry["id"], clockify_update_data )
 
-def get_artikel(entry: Dict):
+def get_clockify_article(entry: Dict):
     clockify_entry_tags = [tag.get("id") for tag in entry.get("tags", [])]
-    default_artikel = frappe.get_value("Clockify Tag to Artikel", {"standartwert": 1}, "name")
+    default_article = frappe.get_value("Clockify Tag to Artikel", {"standartwert": 1}, "name")
 
     if not clockify_entry_tags:
-        return default_artikel
+        return default_article
     
-    hilfs_tag = []
-    kategorien_tag = set()
+    helper_tag_id = []
+    category_tag_ids = set()
 
-    tag_kategorien_docs = frappe.get_list(
+    category_tag_docs = frappe.get_list(
         "Clockify Tag to Kategorie",
         fields=["name", "kategorie"]
     )
 
-    for mapping in tag_kategorien_docs:
+    for mapping in category_tag_docs:
         mapping_doc = frappe.get_doc("Clockify Tag to Kategorie", mapping.name)
         
         for child in mapping_doc.get("tag"):
             child_tag_id = child.tag_id 
 
             if child_tag_id in clockify_entry_tags:
-                kategorien_tag.add(child_tag_id)
+                category_tag_ids.add(child_tag_id)
 
-    hilfs_tag = [tag_id for tag_id in clockify_entry_tags if tag_id not in kategorien_tag]
+    helper_tag_id = [tag_id for tag_id in clockify_entry_tags if tag_id not in category_tag_ids]
 
-    if len(kategorien_tag) > 1:
+    if len(category_tag_ids) > 1:
         frappe.throw("Ungültiger doppelter Tag eintrag")
 
-    if not hilfs_tag:
-        return default_artikel
+    if not helper_tag_id:
+        return default_article
 
-    tag_artikel_doc = frappe.get_list(
+    articel_tag_docs = frappe.get_list(
         "Clockify Tag to Artikel",
         fields=["name"]
     )
 
-    if len(hilfs_tag) == 1:
+    if len(helper_tag_id) == 1:
         # überprüft, ob hilfstäg mit tag von artikel übereinstimmt, wenn übereinstimmt gibt name des dokuments zurück
-        for mapping in tag_artikel_doc:
+        for mapping in articel_tag_docs:
             mapping_doc = frappe.get_doc("Clockify Tag to Artikel", mapping.name)
 
             if len(mapping_doc.get("tag")) == 1:
                 for child in mapping_doc.get("tag"):
                     child_tag_id = child.tag_id 
 
-                    if child_tag_id in hilfs_tag:
+                    if child_tag_id in helper_tag_id:
                         return mapping.name
     else:
-        for mapping in tag_artikel_doc:
+        for mapping in articel_tag_docs:
             mapping_doc = frappe.get_doc("Clockify Tag to Artikel", mapping.name)
             doc_tag_ids = [child.tag_id for child in mapping_doc.get("tag")]
 
@@ -157,7 +157,7 @@ def get_artikel(entry: Dict):
             if set(doc_tag_ids).issubset(set(clockify_entry_tags)) and doc_tag_ids:
                 return mapping_doc.name
 
-    return default_artikel
+    return default_article
 
 def get_timesheet_kategorie_from_entry(entry: Dict) -> str:
     """
@@ -210,7 +210,7 @@ def build_timesheet_detail_data(
 
     kostenstellen = get_timesheet_kategorie_from_entry(entry)
 
-    dienstleistungs_artikel = get_artikel(entry)
+    dienstleistungs_artikel = get_clockify_article(entry)
 
     timesheet_detail_data = {
         "activity_type": activity_type,
