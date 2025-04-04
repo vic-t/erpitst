@@ -15,6 +15,8 @@ from .utilities import (
     build_html_link
 )
 
+activity_type = "Clockify Import"
+
 def validate_project_existence(project_name: str) -> bool:
     """
     Check if a given project name exists in ERPNext.
@@ -197,8 +199,6 @@ def build_timesheet_detail_data(
     Returns:
         Dict: A dictionary with keys matching Timesheet Detail fields.
     """
-
-    activity_type = "Clockify-Import"
 
     time_data = _calculate_times(entry)
 
