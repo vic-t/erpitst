@@ -188,7 +188,6 @@ def get_timesheet_kategorie_from_entry(entry: Dict) -> str:
 
 def build_timesheet_detail_data(
     entry: Dict,
-    dienstleistungs_artikel: str,
     activity_type: str,
     ) -> Dict:
     """
@@ -196,7 +195,6 @@ def build_timesheet_detail_data(
 
     Args:
         entry (Dict): The Clockify time entry.
-        dienstleistungs_artikel (str): The Item Code representing the service provided.
         activity_type (str): The Activity Type associated with the kind of service provided.
 
     Returns:
@@ -262,7 +260,6 @@ def process_clockify_entry_to_erpnext(
     employee_name: str,
     activity_type: str,
     clockify_imported_tag_id: str,
-    dienstleistungs_artikel: str,
     clockify_service: ClockifyService,
     timesheet_service: ERPNextTimesheetService,
     ) -> str:
@@ -277,7 +274,6 @@ def process_clockify_entry_to_erpnext(
         employee_name (str): The employee's name in ERPNext.
         activity_type (str): The Activity Type associated with the kind of service provided.
         clockify_imported_tag_id (str): The tag Id to be set on the Clockify entry.
-        dienstleistungs_artikel (str): The Item Code representing the service provided. 
         clockify_service (ClockifyService): The service to interact with Clockify.
         timesheet_service (ERPNextTimesheetService): The service to interact with ERPNext Timesheets.
     
@@ -290,7 +286,6 @@ def process_clockify_entry_to_erpnext(
 
     timesheet_detail_data = build_timesheet_detail_data(
         entry,
-        dienstleistungs_artikel,
         activity_type,
     )
 
@@ -311,37 +306,9 @@ def process_clockify_entry_to_erpnext(
 
     return timesheet_name
 
-def get_dienstleistungsartikel_for_entry(
-    entry: dict, 
-    clockify_tags_mapping: list
-) -> str:
-    """
-    Sucht in clockify_tags_mapping nach einem passenden Tag (Name und ID). Gibt das 'artikel' zurück, wenn gefunden, sonst None.
-
-    Args:
-        entry (Dicts): The single Clockify time entry dictionary.
-        clockify_tags_mapping (list): List of Tags (Name, ID and Artikel).
-
-    Returns:
-        str: The Artikel of which the Tag belongs to.
-    """
-    clockify_entry_tags = entry.get("tags", [])
-
-    for row in clockify_tags_mapping:
-        for clockify_tag in clockify_entry_tags:
-            if (
-                row.tag_name == clockify_tag.get("name") and
-                row.tag_id == clockify_tag.get("id")
-            ):
-                return row.artikel
-    
-    return None
-
-
 def import_clockify_entries_to_timesheet(
     timesheet_service: ERPNextTimesheetService,
     clockify_service: ClockifyService,
-    dienstleistungs_artikel: str,
     clockify_user_id: str,
     clockify_imported_tag_id: str,
     employee_name: str,
@@ -358,7 +325,6 @@ def import_clockify_entries_to_timesheet(
     Args:
         timesheet_service (ERPNextTimesheetService): The service to interact with ERPNext Timesheets.
         clockify_service (ClockifyService): The service to interact with Clockify.
-        dienstleistungs_artikel (str): The Item Code representing the service provided. 
         clockify_user_id (str): The Clockify user ID whose entries are to be fetched.
         clockify_imported_tag_id (str): The tag Id to be set on the Clockify entry.
         employee_name (str): The employee's name in ERPNext.
@@ -403,17 +369,12 @@ def import_clockify_entries_to_timesheet(
                 else:
                     raise Exception(f"Projekt '{project_name}' fehlt weiterhin.")
 
-            #overridden_artikel = get_dienstleistungsartikel_for_entry(entry, clockify_tags_mapping)
-
-            #dienstleistungs_artikel = overridden_artikel or dienstleistungs_artikel
-
             result = process_clockify_entry_to_erpnext(
                 entry,
                 employee_id,
                 employee_name,
                 activity_type,
                 clockify_imported_tag_id,
-                dienstleistungs_artikel,
                 clockify_service,
                 timesheet_service,
             )

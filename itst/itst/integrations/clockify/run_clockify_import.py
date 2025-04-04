@@ -4,13 +4,12 @@ from .erpnext_timesheet_service import ERPNextTimesheetService
 from .import_controller import import_clockify_entries_to_timesheet
 
 @frappe.whitelist()
-def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, activity_type: str, clockify_start_time: str, clockify_end_time: str):
+def run_clockify_import(user_mapping_name: str, activity_type: str, clockify_start_time: str, clockify_end_time: str):
     """
     Whitelisted method to import Clockify entries into ERPNext Timesheet based on user selection.
 
     Args:
         user_mapping_name (str): The ERPNext employee Id, ERPNext employee name and the Clockify user Id mapped.
-        dienstleistungs_artikel (str): The Item Code representing the service provided. 
         activity_type (str): The Activity Type associated with the kind of service provided.
         clockify_start_time (str): Start date and time for time entries import. 
         clockify_end_time (str): End date and time for time entries import. 
@@ -36,7 +35,6 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
     clockify_workspace_id = clockify_import_settings.workspace_id
     clockify_base_url = clockify_import_settings.clockify_url
     clockify_imported_tag_id = clockify_import_settings.imported_tag_id
-    clockify_tags_mapping = clockify_import_settings.tags_mapping
 
     clockify_service = ClockifyService(
         api_key = clockify_api_key,
@@ -48,8 +46,7 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
 
     import_clockify_entries_to_timesheet(
         timesheet_service,
-        clockify_service,
-        dienstleistungs_artikel,        
+        clockify_service,       
         clockify_user_id,
         clockify_imported_tag_id,
         erpnext_employee_name,
@@ -57,5 +54,4 @@ def run_clockify_import(user_mapping_name: str, dienstleistungs_artikel: str, ac
         erpnext_employee_id,
         clockify_start_time,
         clockify_end_time,
-        clockify_tags_mapping
     )

@@ -48,11 +48,6 @@ frappe.ui.form.on('Clockify Import Settings', {
 				  limit_page_length: 100
 				},
 				callback: function(r2) {
-				  let dienstleistungs_artikel_options = r2.message || [];
-				  if (!dienstleistungs_artikel_options.length) {
-					frappe.msgprint("No Dienstleistungsartikel found.");
-					return;
-				  }
   
 				  frappe.prompt([
 					{
@@ -68,14 +63,6 @@ frappe.ui.form.on('Clockify Import Settings', {
 					  fieldtype: 'Select',
 					  label: 'Aktivität Typ',
 					  options: activity_type_options,  
-					  reqd: 1,
-					  default: ""
-					},
-					{
-					  fieldname: 'dienstleistungs_artikel',
-					  fieldtype: 'Select',
-					  label: 'Dienstleistungsartikel',
-					  options: dienstleistungs_artikel_options,  
 					  reqd: 1,
 					  default: ""
 					},
@@ -98,7 +85,6 @@ frappe.ui.form.on('Clockify Import Settings', {
 					  args: {
 						user_mapping_name: values.selected_user_mapping,
 						activity_type: values.activity_type,
-						dienstleistungs_artikel: values.dienstleistungs_artikel,
 						clockify_start_time: values.start_time,
 						clockify_end_time: values.end_time
 					  },
@@ -108,11 +94,9 @@ frappe.ui.form.on('Clockify Import Settings', {
   
 					console.log("Selected user: " + values.selected_user_mapping);
 					console.log("Activity type: " + values.activity_type);
-					console.log("Dienstleistungsartikel: " + values.dienstleistungs_artikel);
 				  },
 				  __('Import Auswahl'),
 				  __('Import'));
-				  print(dienstleistungs_artikel)
 				}
 			  });
 			}
