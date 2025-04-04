@@ -100,7 +100,16 @@ def update_clockify_tag(
     }
     clockify_service.update_clockify_entry(entry["id"], clockify_update_data )
 
-def get_clockify_article(entry: Dict):
+def get_clockify_article(entry: Dict) -> str:
+    """
+    Determines the Articel for Timesheet.
+
+    Args:
+        entry (Dict): The full time entry dictionary form Clockify.
+
+    Returns:
+        str: The string of the determined articel
+    """
     clockify_entry_tags = [tag.get("id") for tag in entry.get("tags", [])]
     default_article = frappe.get_value("Clockify Tag to Artikel", {"standartwert": 1}, "name")
 
