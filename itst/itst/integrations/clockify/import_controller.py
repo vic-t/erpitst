@@ -102,13 +102,13 @@ def update_clockify_tag(
 
 def get_clockify_article(entry: Dict) -> str:
     """
-    Determines the Articel for Timesheet.
+    Determines the Article for Timesheet.
 
     Args:
         entry (Dict): The full time entry dictionary form Clockify.
 
     Returns:
-        str: The string of the determined articel
+        str: The string of the determined article
     """
     clockify_entry_tags = [tag.get("id") for tag in entry.get("tags", [])]
     default_article = frappe.get_value("Clockify Tag to Artikel", {"standartwert": 1}, "name")
@@ -141,14 +141,14 @@ def get_clockify_article(entry: Dict) -> str:
     if not helper_tag_id:
         return default_article
 
-    articel_tag_docs = frappe.get_list(
+    article_tag_docs = frappe.get_list(
         "Clockify Tag to Artikel",
         fields=["name"]
     )
 
     if len(helper_tag_id) == 1:
         # überprüft, ob hilfstäg mit tag von artikel übereinstimmt, wenn übereinstimmt gibt name des dokuments zurück
-        for mapping in articel_tag_docs:
+        for mapping in article_tag_docs:
             mapping_doc = frappe.get_doc("Clockify Tag to Artikel", mapping.name)
 
             if len(mapping_doc.get("tag")) == 1:
@@ -158,7 +158,7 @@ def get_clockify_article(entry: Dict) -> str:
                     if child_tag_id in helper_tag_id:
                         return mapping.name
     else:
-        for mapping in articel_tag_docs:
+        for mapping in article_tag_docs:
             mapping_doc = frappe.get_doc("Clockify Tag to Artikel", mapping.name)
             doc_tag_ids = [child.tag_id for child in mapping_doc.get("tag")]
 
