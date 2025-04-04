@@ -6,23 +6,23 @@
  "engine": "InnoDB",
  "field_order": [
   "kategorie",
-  "tag_id"
+  "tag"
  ],
  "fields": [
-  {
-   "fieldname": "tag_id",
-   "fieldtype": "Table",
-   "label": "Tag Id",
-   "options": "Clockify Tag Table"
-  },
   {
    "fieldname": "kategorie",
    "fieldtype": "Select",
    "label": "Kategorie",
    "options": "WinJur\nDMS\nInformatik\nTelefonie\nWeb"
+  },
+  {
+   "fieldname": "tag",
+   "fieldtype": "Table",
+   "label": "Tag Id",
+   "options": "Clockify Tag Table"
   }
  ],
- "modified": "2025-04-02 15:39:51.251194",
+ "modified": "2025-04-04 11:29:55.151848",
  "modified_by": "Administrator",
  "module": "ITST",
  "name": "Clockify Tag to Kategorie",
